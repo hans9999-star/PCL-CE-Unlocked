@@ -101,22 +101,13 @@ public static class ThemeManager
     
     // 主页面背景
     /// <summary>
-    ///     上次生成背景时的参数签名，用于跳过重复构建画刷。
+    ///     与原版完全一致：每次刷新都重建画刷。
+    ///     不缓存——背景取决于配置与主题，启动早期配置可能尚未加载完成，
+    ///     缓存会导致用默认值画出的背景永久生效，造成主体与背景颜色不一致。
     /// </summary>
-    private static (int Hue, bool Dark, bool Colorful) _appliedBackgroundSignature =
-        (int.MinValue, false, false);
-
     private static void RefreshBackground()
     {
-        var colorful = Config.Preference.Background.BackgroundColorful;
-        var hue = ThemeService.GetCurrentThemeArgs().Hue;
-        var signature = (hue, IsDarkMode, colorful);
-
-        // 参数没变就不重建画刷：这里每次要跑 3 次 OKLCH 换算再 Freeze，启动阶段开销明显
-        if (signature == _appliedBackgroundSignature) return;
-        _appliedBackgroundSignature = signature;
-
-        if (colorful)
+        if (Config.Preference.Background.BackgroundColorful)
         {
             var brush = new LinearGradientBrush
             {
@@ -124,6 +115,7 @@ public static class ThemeManager
                 StartPoint = new Point(0.9, 0)
             };
 
+            var hue = ThemeService.GetCurrentThemeArgs().Hue;
             var hue1 = hue - 15;
             var hue2 = hue + 15;
             var tone = ThemeService.CurrentTone;
