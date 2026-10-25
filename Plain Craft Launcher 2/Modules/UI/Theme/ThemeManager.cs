@@ -11,6 +11,11 @@ public static class ThemeManager
 {
     private static bool _contextMenuHandlerRegistered;
 
+    /// <summary>
+    ///     上次已应用的主题编号，用于跳过重复的顶部栏背景图处理。
+    /// </summary>
+    private static int _appliedTitleImageId = int.MinValue;
+
     public static bool IsDarkMode => ThemeService.IsDarkMode;
 
     public static ResourceDictionary AppResources => System.Windows.Application.Current.Resources;
@@ -36,7 +41,10 @@ public static class ThemeManager
             if (!ModMain.frmMain.IsLoaded) return;
             RefreshTitleImage();
             RefreshBackground();
-            RefreshAllContextMenuThemes();
+            // 分支说明：右键菜单遍历会递归整个视觉树，启动阶段控件极多时开销明显。
+            // 这里改为空闲时执行，避免拖慢启动滑入动画。
+            ModMain.frmMain.Dispatcher.BeginInvoke(RefreshAllContextMenuThemes,
+                System.Windows.Threading.DispatcherPriority.Background);
         });
     }
 
@@ -45,7 +53,8 @@ public static class ThemeManager
     ///     把主题背景图叠加到顶部栏。<br/>
     ///     分支说明：与原版 PCL 一致——编号 5 及之后、且不是「自定义(14)」的主题，
     ///     会以 50% 透明度（13 号「欧皇彩」为 25%）叠加 Images/Themes/{编号}.png，
-    ///     使跳票红带 Mojang 图标等主题特征得以还原。其余主题不叠加图片。
+    ///     使跳票红带 Mojang 图标等主题特征得以还原。其余主题不叠加图片。<br/>
+    ///     主题未变化时直接跳过，避免启动阶段重复解析资源拖慢动画。
     /// </summary>
     private static void RefreshTitleImage()
     {
@@ -54,6 +63,11 @@ public static class ThemeManager
 
         var theme = ThemeService.CurrentTheme;
         var id = (int)theme;
+
+        // 主题没变就不重复解析图片资源（启动阶段会被调用多次）
+        if (_appliedTitleImageId == id) return;
+        _appliedTitleImageId = id;
+
         if (id >= 5 && theme != ColorTheme.Custom)
         {
             try

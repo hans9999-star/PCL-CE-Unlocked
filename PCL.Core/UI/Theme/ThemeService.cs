@@ -320,11 +320,24 @@ public sealed partial class ThemeService
     }
 
     /// <summary>
-    /// 应用彩色配色到 WPF 资源字典。
+    /// 上次应用配色时的参数签名，用于跳过重复计算。
+    /// </summary>
+    private static (int Hue, double Light, double Chroma, bool Dark) _appliedColorSignature =
+        (int.MinValue, 0, 0, false);
+
+    /// <summary>
+    /// 应用彩色配色到 WPF 资源字典。<br/>
+    /// 参数未变化时直接跳过：_CalculateColors 会做 11 次 OKLCH 换算，
+    /// 启动阶段若被多次调用会明显拖慢滑入动画。
     /// </summary>
     public static void ApplyColorResources()
     {
-        var colors = _CalculateColors(CurrentTone, GetCurrentThemeArgs());
+        var args = GetCurrentThemeArgs();
+        var signature = (args.Hue, args.LightAdjust, args.ChromaAdjust, IsDarkMode);
+        if (signature == _appliedColorSignature) return;
+        _appliedColorSignature = signature;
+
+        var colors = _CalculateColors(CurrentTone, args);
         foreach (var c in colors) c.Apply();
     }
 }
