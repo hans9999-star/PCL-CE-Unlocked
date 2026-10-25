@@ -36,21 +36,23 @@ public static class ThemeManager
 
     /// <summary>
     ///     刷新主题相关界面。<br/>
-    ///     分支说明：改用 BeginInvoke 异步投递，而不是 RunInUi 同步等待。
-    ///     启动阶段窗口控件极多，同步刷新会占用 UI 线程数百毫秒，
-    ///     导致动画线程（RunInUiWait）被阻塞、首帧 deltaTick 过大而直接跳到终点。
+    ///     与原版一致使用 RunInUi 同步执行。窗口加载动画（滑入）期间，
+    ///     右键菜单遍历等重活会抢 UI 线程导致掉帧，因此当窗口尚未加载完成时，
+    ///     只做轻量的标题图与背景刷新，右键菜单遍历延迟到动画结束后。<br/>
+    ///     性能优化：RefreshBackground 与 RefreshTitleImage 均加了参数缓存。
     /// </summary>
     public static void ThemeRefreshMain()
     {
-        var main = ModMain.frmMain;
-        if (main is null) return;
-        main.Dispatcher.BeginInvoke(() =>
+        ModBase.RunInUi(() =>
         {
-            if (!main.IsLoaded) return;
+            var main = ModMain.frmMain;
+            if (main is null || !main.IsLoaded) return;
             RefreshTitleImage();
             RefreshBackground();
-            RefreshAllContextMenuThemes();
-        }, System.Windows.Threading.DispatcherPriority.Background);
+            // 窗口加载动画结束前跳过右键菜单遍历（递归整个视觉树，控件越多越慢）
+            if (main.IsWindowLoadFinished)
+                RefreshAllContextMenuThemes();
+        });
     }
 
     // 顶部栏主题背景图
@@ -154,8 +156,12 @@ public static class ThemeManager
                 _contextMenuHandlerRegistered = true;
             }
 
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             foreach (Window window in System.Windows.Application.Current.Windows)
                 RefreshContextMenusInElement(window);
+            sw.Stop();
+            if (sw.ElapsedMilliseconds > 5)
+                ModBase.Log($"[Theme] 右键菜单主题遍历耗时 {sw.ElapsedMilliseconds} ms");
         }
         catch (Exception ex)
         {

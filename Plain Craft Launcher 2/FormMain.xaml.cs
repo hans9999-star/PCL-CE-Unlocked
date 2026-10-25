@@ -53,6 +53,11 @@ public partial class FormMain
 
     // 窗口加载
     private bool isWindowLoadFinished;
+
+    /// <summary>
+    ///     窗口加载动画是否已完成。供 <see cref="ThemeManager" /> 判断是否可执行重活。
+    /// </summary>
+    public bool IsWindowLoadFinished => isWindowLoadFinished;
     private readonly DragHelper _helper = new();
 
     public FormMain()
@@ -211,6 +216,8 @@ public partial class FormMain
             {
                 RenderTransform = null;
                 isWindowLoadFinished = true;
+                // 窗口加载动画结束，补一次右键菜单主题刷新（启动阶段被跳过）
+                ThemeManager.ThemeRefresh();
                 ModBase.Log(
                     $"[System] DPI：{ModBase.dpi}，系统版本：{Environment.OSVersion.VersionString}，PCL 位置：{Basics.ExecutablePath}");
             }, after: true)

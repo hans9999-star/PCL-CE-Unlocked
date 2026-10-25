@@ -36,7 +36,12 @@ public class UpdatesGitHubModel : IUpdateSource
 
     public bool RefreshCache()
     {
-        var json = Requester.FetchString(_apiUrl, RequestParam.WithRetry);
+        // 分支说明：GitHub 服务器在中国大陆常被墙或超时。原版 WithRetry
+        // 是 30 秒超时 × 3 次重试 = 最坏 90 秒，会在启动阶段卡死更新检查，
+        // 拖慢窗口加载动画。这里改用短超时、不重试，让 UpdatesWrapperModel
+        // 能快速回退到下一个可用源（PCL CE 官方源）。
+        var param = new RequestParam { Timeout = 8000, Retries = 0 };
+        var json = Requester.FetchString(_apiUrl, param);
         var release = ModBase.GetJson(json).ToObject<GitHubRelease>();
         if (release is null) throw new NullReferenceException("无法解析 GitHub Release 信息！");
         _cache = release;
