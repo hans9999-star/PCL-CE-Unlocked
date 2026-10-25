@@ -12,20 +12,12 @@ public static class UpdateManager
 {
     public static bool isUpdateWaitingRestart;
 
-    // 分支说明：更新源改为优先读取本改版的 GitHub Releases，
-    // 这样发布 Release 后启动器就能收到更新提示。
-    // 原有的 PCL CE 官方更新源仍保留在列表末尾作为兜底。
+    // 分支说明：更新源只使用本改版的 GitHub Releases。
+    // 绝不能保留 PCL CE 官方源：官方最新版（2.15.x）版本号高于本改版（1.0.x），
+    // 自动更新会把改版覆盖回官方版，所有解除限制的功能全部失效！
     public static UpdatesWrapperModel remoteServer = new(new List<IUpdateSource>
     {
-        // 本改版自己的更新源（GitHub Releases）
-        new UpdatesGitHubModel("hans9999-star", "PCL-CE-Unlocked", "PCL CE Unlocked"),
-        new UpdatesMirrorChyanModel(),
-        new UpdatesRandomModel(new[]
-        {
-            new UpdatesMinioModel("https://s3.pysio.online/pcl2-ce/", "Pysio"),
-            new UpdatesMinioModel("https://staticassets.naids.com/resources/pclce/", "Naids")
-        }),
-        new UpdatesMinioModel("https://github.com/PCL-Community/PCL2_CE_Server/raw/main/", "GitHub")
+        new UpdatesGitHubModel("hans9999-star", "PCL-CE-Unlocked", "PCL CE Unlocked")
     });
 
     public static bool IsCurrentVersionBeta
