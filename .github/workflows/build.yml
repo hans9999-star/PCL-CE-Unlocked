@@ -1,0 +1,72 @@
+name: Build
+
+on:
+  push:
+    branches: [main, dev]
+    tags: ['v*']
+    paths-ignore:
+      - '**/*.md'
+      - '**/.gitignore'
+      - '**/.editorconfig'
+      - '**/LICENSE'
+      - '**/LICENCE'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          # 必须 >= 10.0.400：项目引用的 Microsoft.CodeAnalysis.CSharp 5.6.0
+          # 需要 Roslyn 5.6+，10.0.100 自带 Roslyn 5.0 会导致源生成器加载失败
+          dotnet-version: '10.0.402'
+
+      - name: Restore
+        run: dotnet restore "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -p:Platform=x64
+
+      - name: Build
+        run: >
+          dotnet publish "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj"
+          -c Release -p:Platform=x64 -p:DeleteExistingFiles=true
+          -o ./artifact --self-contained
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: |
+          $exe = "artifact/Plain Craft Launcher 2.exe"
+          $size = [math]::Round((Get-Item $exe).Length / 1MB, 2)
+          Write-Host "产物大小: $size MB"
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item $exe "release/PCL-CE-Unlocked.exe"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PCL-CE-Unlocked-win-x64
+          path: release/PCL-CE-Unlocked.exe
+
+      # 只有打 tag 时才创建 Release，启动器的更新检查读取的就是这里
+      - name: Publish Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: release/PCL-CE-Unlocked.exe
+          generate_release_notes: true
+          draft: false
+          prerelease: false
