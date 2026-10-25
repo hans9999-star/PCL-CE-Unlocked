@@ -82,7 +82,28 @@ jobs:
 
       - name: Verify signature
         shell: pwsh
+        env:
+          PFX_BASE64: ${{ secrets.SIGN_PFX_BASE64 }}
+          PFX_PASSWORD: ${{ secrets.SIGN_PFX_PASSWORD }}
         run: |
+          if (-not $env:PFX_BASE64) {
+            Write-Host "未配置签名证书，跳过校验"
+            exit 0
+          }
+          # 自签名证书的根不在 runner 的信任库里，先把它装进当前用户的 Root
+          # （仅影响本次 runner，用完即弃），否则 Get-AuthenticodeSignature 会报
+          # "certificate chain terminated in a root certificate which is not trusted"。
+          $pfx = "verify.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_BASE64))
+          $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
+            (Resolve-Path $pfx).Path, $env:PFX_PASSWORD,
+            [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
+          $rootStore = New-Object System.Security.Cryptography.X509Certificates.X509Store('Root','CurrentUser')
+          $rootStore.Open('ReadWrite')
+          $rootStore.Add($cert)
+          $rootStore.Close()
+          Remove-Item $pfx -Force
+
           $sig = Get-AuthenticodeSignature "release/PCL-CE-Unlocked.exe"
           Write-Host "签名状态: $($sig.Status)"
           Write-Host "签名者:   $($sig.SignerCertificate.Subject)"
