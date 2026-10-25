@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using PCL.Core.App;
@@ -12,8 +12,13 @@ public static class UpdateManager
 {
     public static bool isUpdateWaitingRestart;
 
+    // 分支说明：更新源改为优先读取本改版的 GitHub Releases，
+    // 这样发布 Release 后启动器就能收到更新提示。
+    // 原有的 PCL CE 官方更新源仍保留在列表末尾作为兜底。
     public static UpdatesWrapperModel remoteServer = new(new List<IUpdateSource>
     {
+        // 本改版自己的更新源（GitHub Releases）
+        new UpdatesGitHubModel("hans9999-star", "PCL-CE-Unlocked", "PCL CE Unlocked"),
         new UpdatesMirrorChyanModel(),
         new UpdatesRandomModel(new[]
         {
