@@ -82,32 +82,20 @@ jobs:
 
       - name: Verify signature
         shell: pwsh
-        env:
-          PFX_BASE64: ${{ secrets.SIGN_PFX_BASE64 }}
-          PFX_PASSWORD: ${{ secrets.SIGN_PFX_PASSWORD }}
         run: |
-          if (-not $env:PFX_BASE64) {
-            Write-Host "未配置签名证书，跳过校验"
-            exit 0
-          }
-          # 自签名证书的根不在 runner 的信任库里，先把它装进当前用户的 Root
-          # （仅影响本次 runner，用完即弃），否则 Get-AuthenticodeSignature 会报
-          # "certificate chain terminated in a root certificate which is not trusted"。
-          $pfx = "verify.pfx"
-          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_BASE64))
-          $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
-            (Resolve-Path $pfx).Path, $env:PFX_PASSWORD,
-            [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
-          $rootStore = New-Object System.Security.Cryptography.X509Certificates.X509Store('Root','CurrentUser')
-          $rootStore.Open('ReadWrite')
-          $rootStore.Add($cert)
-          $rootStore.Close()
-          Remove-Item $pfx -Force
-
-          $sig = Get-AuthenticodeSignature "release/PCL-CE-Unlocked.exe"
+          # 注意：不要往 Root 证书库安装自签名证书 —— 在无 UI 的 runner 上
+          # X509Store.Add 会弹出确认对话框并永久挂起（曾导致 CI 卡死）。
+          # 这里只校验「确实带了签名且签名者是预期主体」，不依赖信任链。
+          $file = "release/PCL-CE-Unlocked.exe"
+          $sig = Get-AuthenticodeSignature $file
           Write-Host "签名状态: $($sig.Status)"
+          if (-not $sig.SignerCertificate) { throw "产物没有签名" }
           Write-Host "签名者:   $($sig.SignerCertificate.Subject)"
-          if ($sig.Status -ne 'Valid') { throw "签名校验失败：$($sig.StatusMessage)" }
+          Write-Host "有效期至: $($sig.SignerCertificate.NotAfter)"
+          if ($sig.SignerCertificate.Subject -notmatch 'CN=hans') {
+            throw "签名主体不符合预期：$($sig.SignerCertificate.Subject)"
+          }
+          Write-Host "签名校验通过（自签名证书，未验证信任链）"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
