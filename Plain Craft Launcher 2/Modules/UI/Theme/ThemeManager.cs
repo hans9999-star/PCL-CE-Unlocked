@@ -34,18 +34,23 @@ public static class ThemeManager
         ThemeRefreshMain();
     }
 
+    /// <summary>
+    ///     刷新主题相关界面。<br/>
+    ///     分支说明：改用 BeginInvoke 异步投递，而不是 RunInUi 同步等待。
+    ///     启动阶段窗口控件极多，同步刷新会占用 UI 线程数百毫秒，
+    ///     导致动画线程（RunInUiWait）被阻塞、首帧 deltaTick 过大而直接跳到终点。
+    /// </summary>
     public static void ThemeRefreshMain()
     {
-        ModBase.RunInUi(() =>
+        var main = ModMain.frmMain;
+        if (main is null) return;
+        main.Dispatcher.BeginInvoke(() =>
         {
-            if (!ModMain.frmMain.IsLoaded) return;
+            if (!main.IsLoaded) return;
             RefreshTitleImage();
             RefreshBackground();
-            // 分支说明：右键菜单遍历会递归整个视觉树，启动阶段控件极多时开销明显。
-            // 这里改为空闲时执行，避免拖慢启动滑入动画。
-            ModMain.frmMain.Dispatcher.BeginInvoke(RefreshAllContextMenuThemes,
-                System.Windows.Threading.DispatcherPriority.Background);
-        });
+            RefreshAllContextMenuThemes();
+        }, System.Windows.Threading.DispatcherPriority.Background);
     }
 
     // 顶部栏主题背景图
@@ -93,9 +98,23 @@ public static class ThemeManager
     }
     
     // 主页面背景
+    /// <summary>
+    ///     上次生成背景时的参数签名，用于跳过重复构建画刷。
+    /// </summary>
+    private static (int Hue, bool Dark, bool Colorful) _appliedBackgroundSignature =
+        (int.MinValue, false, false);
+
     private static void RefreshBackground()
     {
-        if (Config.Preference.Background.BackgroundColorful)
+        var colorful = Config.Preference.Background.BackgroundColorful;
+        var hue = ThemeService.GetCurrentThemeArgs().Hue;
+        var signature = (hue, IsDarkMode, colorful);
+
+        // 参数没变就不重建画刷：这里每次要跑 3 次 OKLCH 换算再 Freeze，启动阶段开销明显
+        if (signature == _appliedBackgroundSignature) return;
+        _appliedBackgroundSignature = signature;
+
+        if (colorful)
         {
             var brush = new LinearGradientBrush
             {
@@ -103,7 +122,6 @@ public static class ThemeManager
                 StartPoint = new Point(0.9, 0)
             };
 
-            var hue = ThemeService.GetCurrentThemeArgs().Hue;
             var hue1 = hue - 15;
             var hue2 = hue + 15;
             var tone = ThemeService.CurrentTone;
