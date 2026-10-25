@@ -62,20 +62,19 @@ public static class ThemeManager
                 main.ImgTitle.Source =
                     $"pack://application:,,,/Plain Craft Launcher 2;component/Images/Themes/{id}.png";
                 main.ImgTitle.Opacity = theme == ColorTheme.LuckyColor ? 0.25d : 0.5d;
-                main.ImgTitle.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
                 // 缺少图片资源时安静降级为纯色顶部栏，不影响使用
                 ModBase.Log(ex, $"加载主题背景图失败（{id}.png），已降级为纯色顶部栏");
                 main.ImgTitle.Source = null;
-                main.ImgTitle.Visibility = Visibility.Collapsed;
             }
         }
         else
         {
+            // 与原版一致：只清空 Source，不改 Visibility。
+            // 设置 Collapsed 会让该元素退出布局，影响启动滑入动画期间的渲染。
             main.ImgTitle.Source = null;
-            main.ImgTitle.Visibility = Visibility.Collapsed;
         }
     }
     
