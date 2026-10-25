@@ -98,8 +98,11 @@ public class UpdatesGitHubModel : IUpdateSource
         loaders.Add(new ModLoader.LoaderTask<string, int>(
             Lang.Text("Update.Task.ApplyFile"), _ =>
             {
-                // Release 里直接放的就是单文件 exe，直接复制到目标位置
-                File.Copy(tempPath, output, true);
+                // 分支说明：下载目标就是正在运行的 exe，无法直接覆盖，
+                // 因此先落到同目录下的 .new 文件，由 UpdateRestart 在退出前替换。
+                var pending = output + ".new";
+                File.Copy(tempPath, pending, true);
+                ModBase.Log($"[Update] 新版本已下载到 {pending}，等待重启替换");
             }));
 
         return loaders;

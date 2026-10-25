@@ -77,7 +77,10 @@ public static class UpdateManager
 
     public static void UpdateStart(UpdateEnums.UpdateType type, string receivedKey = null, bool forceValidated = false)
     {
-        var dlTargetPath = ModBase.exePath + @"PCL\Plain Craft Launcher Community Edition.exe";
+        // 分支说明：原版把更新文件名写死为 "Plain Craft Launcher Community Edition.exe"，
+        // 本改版的可执行文件名为 "PCL CE Unlocked.exe"，写死会导致更新后找不到文件。
+        // 这里改用当前进程的真实路径，兼容任意文件名。
+        var dlTargetPath = Basics.ExecutablePath;
         ModBase.RunInNewThread(() =>
         {
             try
@@ -114,8 +117,11 @@ public static class UpdateManager
                     SystemInfo.IsArm64System ? UpdateArch.arm64 : UpdateArch.x64, dlTargetPath));
                 loaders.Add(new ModLoader.LoaderTask<int, int>(Lang.Text("Update.Task.Check"), _ =>
                 {
+                    // 分支说明：GitHub Releases 不提供 SHA256，此时跳过校验。
+                    // 只要版本源给了摘要就仍然严格校验。
+                    if (string.IsNullOrWhiteSpace(version.Sha256)) return;
                     var curHash = ModBase.GetFileSHA256(dlTargetPath);
-                    if ((curHash ?? "") != (version.Sha256 ?? ""))
+                    if ((curHash ?? "") != version.Sha256)
                         throw new Exception(Lang.Text("Update.Error.Sha256Mismatch", version.Sha256, curHash));
                 }));
                 if (type == UpdateEnums.UpdateType.UpdateNow)
@@ -172,23 +178,48 @@ public static class UpdateManager
     {
         try
         {
-            var fileName = ModBase.exePath + @"PCL\Plain Craft Launcher Community Edition.exe";
-            if (!File.Exists(fileName))
+            var fileName = Basics.ExecutablePath;
+            var pendingFile = fileName + ".new";
+
+            if (!File.Exists(pendingFile))
             {
-                ModBase.Log("[System] 更新失败：未找到更新文件");
+                ModBase.Log("[System] 更新失败：未找到已下载的新版本文件");
                 return;
             }
 
-            // id old new restart
-            var text =
-                $"update {Process.GetCurrentProcess().Id} \"{Basics.ExecutablePath}\" \"{fileName}\" {(triggerRestart ? "true" : "false")}";
-            ModBase.Log("[System] 更新程序启动，参数：" + text);
-            Process.Start(new ProcessStartInfo(fileName)
-                { WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true, Arguments = text });
+            // 分支说明：下载的新版本落在 .new 文件里（无法覆盖正在运行的 exe）。
+            // 这里启动一个延迟脚本：等本进程退出后把 .new 替换为正式文件，再拉起启动器。
+            ModBase.Log($"[System] 准备应用更新：{pendingFile} -> {fileName}");
+            var batPath = Path.Combine(ModBase.pathTemp, "apply_update.bat");
+            var bat = $"""
+                       @echo off
+                       chcp 65001 >nul
+                       :wait
+                       tasklist /FI "PID eq {Basics.CurrentProcessId}" 2>nul | find "{Basics.CurrentProcessId}" >nul
+                       if not errorlevel 1 (
+                           timeout /t 1 /nobreak >nul
+                           goto wait
+                       )
+                       move /y "{pendingFile}" "{fileName}" >nul
+                       start "" "{fileName}"
+                       del "%~f0"
+                       """;
+            File.WriteAllText(batPath, bat, new System.Text.UTF8Encoding(false));
+            Process.Start(new ProcessStartInfo("cmd.exe", $"/c \"{batPath}\"")
+            {
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true,
+                UseShellExecute = false
+            });
+
             if (triggerRestartAndByEnd)
             {
                 ModMain.frmMain.EndProgram(false, true);
                 ModBase.Log("[System] 已由于更新强制结束程序");
+            }
+            else
+            {
+                ModBase.Log("[System] 更新文件已就绪，将在退出后应用");
             }
         }
         catch (Win32Exception ex)
