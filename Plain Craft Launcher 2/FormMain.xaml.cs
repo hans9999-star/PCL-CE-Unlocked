@@ -1379,14 +1379,20 @@ public partial class FormMain
         Download = 1,
 
         /// <summary>
-        ///     联机。
+        ///     联机。<br/>
+        ///     分支说明：恢复为顶层标签，位置与原版 PCL2 一致（启动/下载/联机/设置/工具）。
         /// </summary>
-        Tools = 3,
+        Link = 2,
 
         /// <summary>
         ///     设置。
         /// </summary>
-        Setup = 2,
+        Setup = 3,
+
+        /// <summary>
+        ///     工具（百宝箱）。
+        /// </summary>
+        Tools = 4,
 
         /// <summary>
         ///     实例选择。这是一个副页面。
@@ -1865,7 +1871,14 @@ public partial class FormMain
                         PageChangeAnim(ModMain.frmDownloadLeft, (FrameworkElement)ModMain.frmDownloadLeft.PageGet(subType));
                         break;
                     }
-                case PageType.Tools: // 联机
+                case PageType.Link: // 联机
+                    {
+                        // 与原版 PCL2 一致：联机页没有左侧面板，用空的 MyPageLeft 占位
+                        ModMain.frmLinkMain ??= new PageLinkMain();
+                        PageChangeAnim(new MyPageLeft(), ModMain.frmLinkMain);
+                        break;
+                    }
+                case PageType.Tools: // 工具（百宝箱）
                     {
                         ModMain.frmToolsLeft ??= new PageToolsLeft();
                         subType = ModMain.frmToolsLeft.pageID;

@@ -23,10 +23,9 @@ namespace PCL.Core.Link.Lobby;
 
 /// <summary>
 /// Lobby server. For auto-management<br/>
-/// 分支说明：本分支已移除联机功能，因此不再将其注册为生命周期服务，
-/// 避免启动器在后台自动初始化大厅、扫描局域网世界或下载 EasyTier。
+/// 分支说明：本分支已恢复联机功能，因此重新注册为生命周期服务，与官方行为一致。
 /// </summary>
-// [LifecycleService(LifecycleState.Loaded)]
+[LifecycleService(LifecycleState.Loaded)]
 public class LobbyService() : GeneralService("lobby", "LobbyService")
 {
     private static readonly LobbyController _LobbyController = new();

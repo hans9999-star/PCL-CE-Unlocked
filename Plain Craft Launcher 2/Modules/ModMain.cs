@@ -35,6 +35,8 @@ public static class ModMain
     public static PageSelectRight? frmSelectRight;
     public static PageSpeedLeft? frmSpeedLeft;
     public static PageSpeedRight? frmSpeedRight;
+    // 分支说明：恢复联机功能，作为顶层「联机」标签页（与原版 PCL2 的标签布局一致）
+    public static PageLinkMain? frmLinkMain;
     public static PageToolsLeft? frmToolsLeft;
     public static PageToolsTest? frmToolsTest;
     public static PageDownloadLeft? frmDownloadLeft;
