@@ -14,8 +14,15 @@ public static class LobbyInfoProvider
 {
     public static bool IsLobbyAvailable { get; set; } = false;
     public static bool AllowCustomName { get; set; } = false;
-    public static bool RequiresLogin { get; set; } = true;
-    public static bool RequiresRealName { get; set; } = true;
+
+    // 分支说明：默认值改为 false。原版默认 true，仅在拉取到大厅 announce.json 后
+    // 才会按 requireLogin 覆盖。本改版移除了 Natayark 登录界面，若在公告拉取完成前
+    // 点击创建/加入，LobbyPrecheck 会以“请先登录”拦下且无处可登录，造成死路。
+    // 当前公开大厅为 requireLogin=false，默认放行与之一致。
+    public static bool RequiresLogin { get; set; } = false;
+    // 同上：实名要求依赖 Natayark 资料，登录界面已移除，默认放行。
+    // 当前公开大厅为 requireRealname=false。
+    public static bool RequiresRealName { get; set; } = false;
     public static int ProtocolVersion { get; set; } = 6;
 
     public static BroadcastLocal? McBroadcast { get; internal set; }

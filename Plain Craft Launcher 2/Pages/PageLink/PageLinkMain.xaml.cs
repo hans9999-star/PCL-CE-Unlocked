@@ -885,7 +885,7 @@ public partial class PageLinkMain
             ModBase.Log("[Link] 子页面更改为 " + ModBase.GetStringFromEnum(value));
             PageOnContentExit();
         }
-    } = States.Link.LinkEula ? Subpages.PanSelect : Subpages.PanEula;
+    } = Subpages.PanSelect; // 分支说明：本改版已移除 Natayark 登录，不再展示协议页，直接进入创建/加入界面
 
     private void PageLinkLobby_OnPageEnter()
     {
