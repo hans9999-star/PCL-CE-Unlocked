@@ -5,6 +5,7 @@ using PCL.Core.IO.Net;
 using PCL.Core.IO.Net.SocketForward;
 using PCL.Core.Link.Natayark;
 using PCL.Core.Logging;
+using PCL.Core.Minecraft.Profile;
 using PCL.Core.Utils;
 using PCL.Core.Utils.Exts;
 
@@ -131,9 +132,19 @@ public static class LobbyInfoProvider
     }
 
     /// <summary>
-    /// 获取用于联机显示的用户名
+    /// 获取用于联机显示的用户名。<br/>
+    /// 分支说明：本改版移除了 Natayark 登录与「设置 → 联机」里的用户名输入框，
+    /// 若仍按原逻辑要求 Config.Link.Username 或 Natayark 用户名，用户将完全无法联机。
+    /// 因此这里按优先级回退：自定义用户名 → Natayark 用户名 → 当前 Minecraft 档案名
+    /// （与原版 PCL2 直接用游戏名联机的体验一致）→ Windows 用户名。
     /// </summary>
-    public static string? GetUsername() => AllowCustomName
-        ? Config.Link.Username.ReplaceNullOrEmpty(NatayarkProfileManager.NaidProfile.Username)
-        : NatayarkProfileManager.NaidProfile.Username;
+    public static string GetUsername()
+    {
+        var custom = AllowCustomName ? Config.Link.Username : null;
+        var name = custom
+            .ReplaceNullOrEmpty(NatayarkProfileManager.NaidProfile.Username)
+            .ReplaceNullOrEmpty(ProfileService.Current?.UserName)
+            .ReplaceNullOrEmpty(Environment.UserName);
+        return name.ReplaceNullOrEmpty("PCLPlayer");
+    }
 }

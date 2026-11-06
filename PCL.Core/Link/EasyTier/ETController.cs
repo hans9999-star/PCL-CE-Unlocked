@@ -163,16 +163,11 @@ public static class ETController
             arguments.AddFlag("multi-thread");
             arguments.Add("machine-id", Identify.LauncherId);
 
-            // TODO: 等待玩家档案迁移以获取正在使用的档案名称
-            var showName = "default";
-            if (AllowCustomName && !string.IsNullOrWhiteSpace(Config.Link.Username))
-            {
-                showName = Config.Link.Username;
-            }
-            else if (!string.IsNullOrWhiteSpace(NaidProfile.Username))
-            {
-                showName = NaidProfile.Username;
-            }
+            // 分支说明：改用 LobbyInfoProvider.GetUsername()，它包含自定义用户名 →
+            // Natayark → Minecraft 档案名 → Windows 用户名的完整回退，
+            // 避免本改版（无登录/无用户名设置界面）下显示名退化成 "default"。
+            var showName = GetUsername();
+            if (string.IsNullOrWhiteSpace(showName)) showName = "default";
 
             arguments.Add("hostname",
                 (isHost ? "H|" : "J|") + showName + (!string.IsNullOrWhiteSpace(hostname) ? "|" + hostname : ""));

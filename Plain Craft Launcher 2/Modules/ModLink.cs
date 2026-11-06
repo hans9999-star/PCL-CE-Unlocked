@@ -84,7 +84,9 @@ public static class ModLink
             }
         }
 
-        if (string.IsNullOrWhiteSpace(Config.Link.Username) && string.IsNullOrWhiteSpace(NatayarkProfileManager.NaidProfile.Username))
+        // 分支说明：改用 GetUsername()，它已包含 Minecraft 档案名等回退，
+        // 不再因为没设置过用户名而把联机完全挡死。
+        if (string.IsNullOrWhiteSpace(LobbyInfoProvider.GetUsername()))
         {
             HintService.Hint(Lang.Text("Link.Mod.UsernameOrLogin"), HintType.Error);
             return false;
