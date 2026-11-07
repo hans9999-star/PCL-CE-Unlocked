@@ -3336,6 +3336,15 @@
     <sys:String x:Key="Tools.GameLink.Link.CreateAction">建立房間</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.JoinTitle">加入房間</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.JoinDesc">點擊下方【加入房間】，輸入房主發給你的邀請碼&#xA;加入成功後啟動遊戲，在【多人遊戲】頁面最下方即可進入房間</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.CreateSubtitle">邀請朋友加入你的單人遊戲。</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.JoinSubtitle">輸入你收到的邀請碼，加入朋友的房間。</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PingTip">延遲</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PlayerTip">房間內人數</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PortTip">埠</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.IpTip">伺服器 IP（點擊複製）</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PlayerUnit">{0} 人</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PingUnit">{0} ms</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PingConnecting">連線中</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.JoinAction">加入房間</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.Finish.Copied">已複製到剪貼簿</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.Finish.Created">已建立房間</sys:String>
