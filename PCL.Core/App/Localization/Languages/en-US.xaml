@@ -3431,6 +3431,7 @@
     <sys:String x:Key="Tools.GameLink.Link.ServerHostVersion">Version</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Vanilla">Vanilla</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Paper">Paper (plugins)</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Fabric">Fabric (mods)</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostLoadingVersions">Loading version list...</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostNoVersions">Failed to load the version list, please check your network</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostPort">Port</sys:String>
