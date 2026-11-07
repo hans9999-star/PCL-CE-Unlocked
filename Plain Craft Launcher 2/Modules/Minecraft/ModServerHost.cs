@@ -19,7 +19,13 @@ public enum ServerSoftware
     Paper,
 
     /// <summary>Fabric（模组端，服务端 jar 由 Fabric Meta 直接提供）。</summary>
-    Fabric
+    Fabric,
+
+    /// <summary>Forge（模组端，需先执行官方安装器）。</summary>
+    Forge,
+
+    /// <summary>NeoForge（模组端，需先执行官方安装器）。</summary>
+    NeoForge
 }
 
 /// <summary>
@@ -32,6 +38,10 @@ public static class ModServerHost
     private const string MojangManifest = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     private const string PaperProject = "https://fill.papermc.io/v3/projects/paper";
     private const string FabricMeta = "https://meta.fabricmc.net/v2";
+    private const string ForgePromotions = "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json";
+    private const string ForgeMaven = "https://maven.minecraftforge.net/net/minecraftforge/forge";
+    // NeoForge 官方 maven 在国内基本不可达（实测超时），改用 bmclapi 镜像
+    private const string NeoForgeMirror = "https://bmclapi2.bangbang93.com";
     private static Process? _process;
     private static readonly object _lock = new();
 
@@ -74,9 +84,13 @@ public static class ModServerHost
         {
             ServerSoftware.Paper => "Paper",
             ServerSoftware.Fabric => "Fabric",
+            ServerSoftware.Forge => "Forge",
+            ServerSoftware.NeoForge => "NeoForge",
             _ => "Vanilla"
         };
-        return Path.Combine(ModBase.exePath, "PCL", "Server", $"{name}-{version}");
+        // Forge 版本串形如 "1.21.1|52.1.20"，竖线不能做目录名
+        var safe = version.Replace('|', '-');
+        return Path.Combine(ModBase.exePath, "PCL", "Server", $"{name}-{safe}");
     }
 
     /// <summary>服务端 jar 路径。</summary>
@@ -119,6 +133,58 @@ public static class ModServerHost
             }
 
             return list;
+        }
+
+        if (software == ServerSoftware.Forge)
+        {
+            // promos 键形如 "1.21.1-recommended" / "1.21.1-latest"，优先推荐版
+            var promos = await FetchJsonAsync(ForgePromotions).ConfigureAwait(false);
+            if (promos["promos"] is not JsonObject obj) return list;
+            var recommended = new List<string>();
+            var latest = new List<string>();
+            foreach (var kv in obj)
+            {
+                var key = kv.Key;
+                var val = kv.Value?.ToString();
+                if (string.IsNullOrWhiteSpace(val)) continue;
+                if (key.EndsWith("-recommended", StringComparison.Ordinal))
+                    recommended.Add($"{key[..^"-recommended".Length]}|{val}");
+                else if (key.EndsWith("-latest", StringComparison.Ordinal))
+                    latest.Add($"{key[..^"-latest".Length]}|{val}");
+            }
+
+            // 推荐版在前，只有推荐版缺失时才补充 latest
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in recommended)
+            {
+                var mc = item.Split('|')[0];
+                if (seen.Add(mc)) list.Add(item);
+            }
+
+            foreach (var item in latest)
+            {
+                var mc = item.Split('|')[0];
+                if (seen.Add(mc)) list.Add(item);
+            }
+
+            return list;
+        }
+
+        if (software == ServerSoftware.NeoForge)
+        {
+            var dir = await FetchJsonAsync($"{NeoForgeMirror}/neoforge/meta/api/maven/details/releases/net/neoforged/neoforge")
+                .ConfigureAwait(false);
+            if (dir["files"] is not JsonArray files) return list;
+            var all = new List<string>();
+            foreach (var x in files)
+            {
+                if (x?["type"]?.ToString() != "DIRECTORY") continue;
+                var name = x["name"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(name)) all.Add(name);
+            }
+
+            all.Reverse(); // maven 目录是升序，倒过来让新版本在前
+            return all;
         }
 
         if (software == ServerSoftware.Fabric)
@@ -171,6 +237,23 @@ public static class ModServerHost
             if (string.IsNullOrWhiteSpace(url)) return null;
             return (new List<string> { url }, dl?["checksums"]?["sha256"]?.ToString() ?? "",
                 (long?)dl?["size"] ?? -1);
+        }
+
+
+        if (software == ServerSoftware.Forge)
+        {
+            // version 形如 "1.21.1|52.1.20"
+            var parts = version.Split('|');
+            if (parts.Length != 2) return null;
+            var installer = $"{ForgeMaven}/{parts[0]}-{parts[1]}/forge-{parts[0]}-{parts[1]}-installer.jar";
+            return (new List<string> { installer }, "", -1);
+        }
+
+        if (software == ServerSoftware.NeoForge)
+        {
+            var installer =
+                $"{NeoForgeMirror}/maven/net/neoforged/neoforge/{version}/neoforge-{version}-installer.jar";
+            return (new List<string> { installer }, "", -1);
         }
 
         if (software == ServerSoftware.Fabric)
@@ -374,7 +457,151 @@ public static class ModServerHost
     /// <summary>
     ///     启动服务端进程。输出会通过 <see cref="OutputReceived" /> 事件逐行抛出。
     /// </summary>
+    /// <summary>
+    ///     直接以 -jar 方式启动服务端（原版 / Paper / Fabric）。
+    /// </summary>
     public static bool Start(string serverDir, string jarPath, int memoryMb)
+    {
+        var args = new List<string>
+        {
+            $"-Xmx{memoryMb}M",
+            $"-Xms{Math.Min(memoryMb, Math.Max(512, memoryMb / 2))}M",
+            "-Dfile.encoding=UTF-8",
+            "-jar",
+            jarPath,
+            "nogui"
+        };
+        return StartProcess(serverDir, args);
+    }
+
+    /// <summary>
+    ///     按 Forge / NeoForge 生成的 run.bat 方式启动：
+    ///     <c>java @user_jvm_args.txt @&lt;win_args.txt&gt; nogui</c>。<br/>
+    ///     分支说明：win_args.txt 里的 <c>-jar forge-xxx-shim.jar</c> 是相对服务器根目录的路径，
+    ///     所以工作目录必须是服务器根目录，且参数文件要以相对路径传入。
+    /// </summary>
+    public static bool StartWithArgsFile(string serverDir, string argsRelativePath, int memoryMb)
+    {
+        try
+        {
+            // 覆写 user_jvm_args.txt 写入内存设置
+            File.WriteAllText(Path.Combine(serverDir, "user_jvm_args.txt"),
+                "# Generated by PCL CE Unlocked\r\n" +
+                $"# {DateTime.Now:yyyy-MM-dd HH:mm:ss}\r\n" +
+                $"-Xmx{memoryMb}M\r\n" +
+                $"-Xms{Math.Min(memoryMb, Math.Max(512, memoryMb / 2))}M\r\n", Encoding.UTF8);
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerHost] 写入 user_jvm_args.txt 失败", ModBase.LogLevel.Hint);
+            return false;
+        }
+
+        var args = new List<string>
+        {
+            "@user_jvm_args.txt",
+            "@" + argsRelativePath.Replace('\\', '/'),
+            "nogui"
+        };
+        return StartProcess(serverDir, args);
+    }
+
+    /// <summary>
+    ///     执行 Forge / NeoForge 安装器（--installServer）。会下载大量依赖，可能耗时数分钟。
+    /// </summary>
+    public static async Task<bool> RunInstallerAsync(string serverDir, string installerPath)
+    {
+        var java = GetJavaPath();
+        var psi = new ProcessStartInfo(java)
+        {
+            // 安装器按「工作目录」决定安装位置，这里必须显式设置，否则会装到启动器目录去
+            WorkingDirectory = serverDir,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
+        };
+        psi.ArgumentList.Add("-jar");
+        psi.ArgumentList.Add(installerPath);
+        psi.ArgumentList.Add("--installServer");
+
+        try
+        {
+            ModBase.Log($"[ServerHost] 执行安装器：{java} -jar {installerPath} --installServer");
+            using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+            proc.OutputDataReceived += (_, e) =>
+            {
+                if (e.Data is not null) OutputReceived?.Invoke(e.Data + Environment.NewLine);
+            };
+            proc.ErrorDataReceived += (_, e) =>
+            {
+                if (e.Data is not null) OutputReceived?.Invoke(e.Data + Environment.NewLine);
+            };
+            proc.Start();
+            proc.BeginOutputReadLine();
+            proc.BeginErrorReadLine();
+            await proc.WaitForExitAsync().ConfigureAwait(false);
+            ModBase.Log($"[ServerHost] 安装器退出码：{proc.ExitCode}");
+            if (proc.ExitCode != 0)
+            {
+                OutputReceived?.Invoke($"[ServerHost] 安装器退出码 {proc.ExitCode}" + Environment.NewLine);
+                return false;
+            }
+
+            // 安装完成后安装器与日志已无用
+            try
+            {
+                if (File.Exists(installerPath)) File.Delete(installerPath);
+                var log = installerPath + ".log";
+                if (File.Exists(log)) File.Delete(log);
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerHost] 执行安装器失败", ModBase.LogLevel.Hint);
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     在安装结果里找 Forge / NeoForge 生成的启动参数文件（win_args.txt），
+    ///     返回相对服务器根目录的路径。
+    /// </summary>
+    public static string? FindArgsFile(string serverDir)
+    {
+        try
+        {
+            var libDir = Path.Combine(serverDir, "libraries", "net");
+            if (!Directory.Exists(libDir)) return null;
+            foreach (var vendor in new[] { "minecraftforge", "neoforged" })
+            {
+                var root = Path.Combine(libDir, vendor);
+                if (!Directory.Exists(root)) continue;
+                var hit = Directory.EnumerateFiles(root, "win_args.txt", SearchOption.AllDirectories)
+                    .OrderByDescending(path => path.Length)
+                    .FirstOrDefault();
+                if (hit is null) continue;
+                return Path.GetRelativePath(serverDir, hit);
+            }
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerHost] 查找启动参数文件失败", ModBase.LogLevel.Hint);
+        }
+
+        return null;
+    }
+
+    /// <summary>通用进程启动。</summary>
+    private static bool StartProcess(string serverDir, IEnumerable<string> args)
     {
         if (IsRunning) return false;
 
@@ -390,12 +617,7 @@ public static class ModServerHost
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8
         };
-        psi.ArgumentList.Add($"-Xmx{memoryMb}M");
-        psi.ArgumentList.Add($"-Xms{Math.Min(memoryMb, Math.Max(512, memoryMb / 2))}M");
-        psi.ArgumentList.Add("-Dfile.encoding=UTF-8");
-        psi.ArgumentList.Add("-jar");
-        psi.ArgumentList.Add(jarPath);
-        psi.ArgumentList.Add("nogui");
+        foreach (var a in args) psi.ArgumentList.Add(a);
 
         try
         {
@@ -431,6 +653,7 @@ public static class ModServerHost
         }
     }
 
+    /// <summary>
     /// <summary>向服务端控制台发送一条命令。</summary>
     public static void SendCommand(string command)
     {
