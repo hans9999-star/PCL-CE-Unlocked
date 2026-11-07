@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Collections.Specialized;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using PCL.Core.App;
 using PCL.Core.Link;
@@ -762,13 +763,28 @@ public partial class PageLinkMain
             CurrentSubpage == Subpages.PanFinish ? Visibility.Visible : Visibility.Collapsed;
         ModMain.frmLinkMain.PanServerHost.Visibility =
             CurrentSubpage == Subpages.PanServerHost ? Visibility.Visible : Visibility.Collapsed;
-        if (CurrentSubpage == Subpages.PanServerHost) RefreshServerHostStatus();
+        if (CurrentSubpage == Subpages.PanServerHost)
+        {
+            RefreshServerHostStatus();
+            _ = EnsureServerVersionsAsync();
+        }
     }
 
     #region 本地开服
 
-    /// <summary>当前实例的开服端口（分享给朋友时要用）。</summary>
+    /// <summary>当前开服端口（分享给朋友时要用）。</summary>
     private int _serverHostPort = 25565;
+
+    /// <summary>版本列表是否已加载过。</summary>
+    private bool _serverVersionsLoaded;
+
+    /// <summary>当前选择的服务端类型。</summary>
+    private ServerSoftware SelectedSoftware =>
+        ComboServerType.SelectedIndex == 1 ? ServerSoftware.Paper : ServerSoftware.Vanilla;
+
+    /// <summary>当前选择的服务端版本（与实例无关）。</summary>
+    private string SelectedVersion =>
+        (ComboServerVersion.SelectedItem as MyComboBoxItem)?.Content?.ToString() ?? "";
 
     private void BtnServerHost_Click(object sender, MouseButtonEventArgs e)
     {
@@ -786,50 +802,100 @@ public partial class PageLinkMain
 
     private void RefreshServerHostStatus()
     {
-        var inst = PageInstanceLeft.McInstance;
-        if (inst is null)
+        var running = ModServerHost.IsRunning;
+        var version = SelectedVersion;
+        if (string.IsNullOrWhiteSpace(version))
         {
-            LabServerStatus.Text = Lang.Text("Instance.ServerHost.Status.NoInstance");
+            LabServerStatus.Text = Lang.Text("Tools.GameLink.Link.ServerHostLoadingVersions");
             BtnServerStart.IsEnabled = false;
-            BtnServerStop.IsEnabled = false;
-            BtnServerShare.IsEnabled = false;
+            BtnServerStop.IsEnabled = running;
+            BtnServerShare.IsEnabled = running;
             return;
         }
 
-        var running = ModServerHost.IsRunning;
-        var jarExists = File.Exists(ModServerHost.GetJarPath(inst.PathInstance));
+        var jarExists = File.Exists(ModServerHost.GetJarPath(SelectedSoftware, version));
         LabServerStatus.Text = (running
             ? Lang.Text("Instance.ServerHost.Status.Running")
             : jarExists
                 ? Lang.Text("Instance.ServerHost.Status.Ready")
                 : Lang.Text("Instance.ServerHost.Status.NoJar"))
-            + "  ·  " + inst.Name;
+            + "  ·  " + version;
         BtnServerStart.IsEnabled = !running;
         BtnServerStop.IsEnabled = running;
         BtnServerShare.IsEnabled = running;
     }
 
+    /// <summary>
+    ///     填好类型下拉，并按当前类型拉取版本列表。<br/>
+    ///     分支说明：服务端版本由这里独立选择，不再取自当前实例。
+    /// </summary>
+    private async Task EnsureServerVersionsAsync(bool forceReload = false)
+    {
+        if (ComboServerType.Items.Count == 0)
+        {
+            ComboServerType.Items.Add(new MyComboBoxItem
+                { Content = Lang.Text("Tools.GameLink.Link.ServerHostType.Vanilla") });
+            ComboServerType.Items.Add(new MyComboBoxItem
+                { Content = Lang.Text("Tools.GameLink.Link.ServerHostType.Paper") });
+            ComboServerType.SelectedIndex = 0;
+        }
+
+        if (_serverVersionsLoaded && !forceReload) return;
+        _serverVersionsLoaded = true;
+
+        ComboServerVersion.Items.Clear();
+        LabServerStatus.Text = Lang.Text("Tools.GameLink.Link.ServerHostLoadingVersions");
+        var software = SelectedSoftware;
+        var list = await ModServerHost.GetVersionsAsync(software).ConfigureAwait(true);
+        if (list.Count == 0)
+        {
+            _serverVersionsLoaded = false;
+            HintService.Hint(Lang.Text("Tools.GameLink.Link.ServerHostNoVersions"), HintType.Error);
+            RefreshServerHostStatus();
+            return;
+        }
+
+        foreach (var v in list)
+            ComboServerVersion.Items.Add(new MyComboBoxItem { Content = v });
+        ComboServerVersion.SelectedIndex = 0;
+        RefreshServerHostStatus();
+    }
+
+    private async void ComboServerType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsLoaded) return;
+        await EnsureServerVersionsAsync(forceReload: true).ConfigureAwait(true);
+    }
+
     private async void BtnServerStart_Click(object sender, MouseButtonEventArgs e)
     {
-        var inst = PageInstanceLeft.McInstance;
-        if (inst is null) return;
+        var version = SelectedVersion;
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            HintService.Hint(Lang.Text("Tools.GameLink.Link.ServerHostNoVersions"), HintType.Error);
+            return;
+        }
 
-        var dir = inst.PathInstance;
-        var jarPath = ModServerHost.GetJarPath(dir);
+        var software = SelectedSoftware;
+        var dir = ModServerHost.GetServerDir(software, version);
+        var jarPath = ModServerHost.GetJarPath(software, version);
 
         if (!File.Exists(jarPath))
         {
-            var url = ModServerHost.GetServerJarUrl(dir, out var sha1, out var size);
-            if (string.IsNullOrWhiteSpace(url))
+            BtnServerStart.IsEnabled = false;
+            LabServerStatus.Text = Lang.Text("Instance.ServerHost.Status.Downloading");
+            ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.DownloadingStart", version));
+
+            var resolved = await ModServerHost.ResolveDownloadAsync(software, version).ConfigureAwait(true);
+            if (resolved is null)
             {
-                HintService.Hint(Lang.Text("Instance.ServerHost.Error.NoServerDownload", inst.Name), HintType.Error);
+                HintService.Hint(Lang.Text("Instance.ServerHost.Error.NoServerDownload", version), HintType.Error);
+                RefreshServerHostStatus();
                 return;
             }
 
-            BtnServerStart.IsEnabled = false;
-            LabServerStatus.Text = Lang.Text("Instance.ServerHost.Status.Downloading");
-            ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.DownloadingStart", inst.Name));
-            if (!await ModServerHost.DownloadJarAsync(url, jarPath, size, sha1).ConfigureAwait(true))
+            var (urls, _, size) = resolved.Value;
+            if (!await ModServerHost.DownloadJarAsync(urls, jarPath, size).ConfigureAwait(true))
             {
                 HintService.Hint(Lang.Text("Instance.ServerHost.Error.DownloadFailed"), HintType.Error);
                 RefreshServerHostStatus();
