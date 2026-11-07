@@ -85,6 +85,7 @@
     <!-- Common.Installation -->
 
     <sys:String x:Key="Common.Installation.Cleanroom">Cleanroom</sys:String>
+    <sys:String x:Key="Common.Installation.Paper">Paper</sys:String>
     <sys:String x:Key="Common.Installation.Fabric">Fabric</sys:String>
     <sys:String x:Key="Common.Installation.FabricApi">Fabric API</sys:String>
     <sys:String x:Key="Common.Installation.Forge">Forge</sys:String>
