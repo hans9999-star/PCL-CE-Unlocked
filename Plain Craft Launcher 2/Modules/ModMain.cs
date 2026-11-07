@@ -51,6 +51,7 @@ public static class ModMain
     public static PageDownloadLabyMod? frmDownloadLabyMod;
     public static PageDownloadLegacyFabric? frmDownloadLegacyFabric;
     public static PageDownloadMod? frmDownloadMod;
+    public static PageDownloadMod? frmDownloadPlugin;
     public static PageDownloadPack? frmDownloadPack;
     public static PageDownloadDataPack? frmDownloadDataPack;
     public static PageDownloadShader? frmDownloadShader;
@@ -76,6 +77,7 @@ public static class ModMain
     public static PageInstanceLeft? frmInstanceLeft;
     public static PageInstanceOverall? frmInstanceOverall;
     public static PageInstanceCompResource? frmInstanceMod;
+    public static PageInstanceCompResource? frmInstancePlugin;
     public static PageInstanceModDisabled? frmInstanceModDisabled;
     public static PageInstanceCompJarInJar? frmInstanceModJarInJar;
     public static PageInstanceScreenshot? frmInstanceScreenshot;
