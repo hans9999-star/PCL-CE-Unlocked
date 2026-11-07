@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+using System.Windows.Controls;
 using System.Windows.Input;
 using PCL.Core.App.Localization;
 
@@ -19,6 +19,10 @@ public partial class PageDownloadLeft : IRefreshable
 
     public void Refresh(FormMain.PageSubType subType)
     {
+        // 分支说明：离开服务端插件下载页即清掉服务端目标，避免污染普通下载
+        if (subType != FormMain.PageSubType.DownloadPlugin)
+            ModServerContent.ActiveTarget = null;
+
         switch (subType)
         {
             case FormMain.PageSubType.DownloadInstall:
@@ -50,6 +54,21 @@ public partial class PageDownloadLeft : IRefreshable
                 }
 
                 ItemMod.Checked = true;
+                break;
+            }
+            // 分支说明：服务端插件下载复用 Mod 下载页的骨架，但内容类型为 Plugin。
+            // 左栏没有对应条目（只从「本地开服」进入），因此不设置 Checked。
+            case FormMain.PageSubType.DownloadPlugin:
+            {
+                ModComp.compProjectCache.Clear();
+                ModComp.compFilesCache.Clear();
+                if (ModMain.frmDownloadPlugin is not null)
+                {
+                    ModMain.frmDownloadPlugin.Content.storage = new ModComp.CompProjectStorage();
+                    ModMain.frmDownloadPlugin.Content.page = 0;
+                    ModMain.frmDownloadPlugin.PageLoaderRestart();
+                }
+
                 break;
             }
             case FormMain.PageSubType.DownloadPack:
@@ -252,6 +271,12 @@ public partial class PageDownloadLeft : IRefreshable
                 if (ModMain.frmDownloadMod is null)
                     ModMain.frmDownloadMod = new PageDownloadMod();
                 return ModMain.frmDownloadMod;
+            }
+            case FormMain.PageSubType.DownloadPlugin:
+            {
+                if (ModMain.frmDownloadPlugin is null)
+                    ModMain.frmDownloadPlugin = new PageDownloadMod(ModComp.CompType.Plugin);
+                return ModMain.frmDownloadPlugin;
             }
             case FormMain.PageSubType.DownloadPack:
             {
