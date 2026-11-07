@@ -925,6 +925,32 @@
     <sys:String x:Key="Instance.Left.Schematics">投影原理圖</sys:String>
     <sys:String x:Key="Instance.Left.Screenshots">截圖</sys:String>
     <sys:String x:Key="Instance.Left.Servers">伺服器</sys:String>
+    <sys:String x:Key="Instance.Left.ServerHost">開服</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Title">便携開服</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Description">在目前實例上直接開一個原版伺服器：首次會自動下載官方 server.jar，並寫好 eula.txt 與 server.properties，使用啟動器已偵測到的 Java 啟動，無需手動改腳本。</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Console">伺服器主控台</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Port">埠</sys:String>
+    <sys:String x:Key="Instance.ServerHost.MaxPlayers">最大玩家數</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Memory">最大記憶體 (MB)</sys:String>
+    <sys:String x:Key="Instance.ServerHost.OnlineMode">正版驗證</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Start">一鍵開服</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Stop">停止</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Send">傳送</sys:String>
+    <sys:String x:Key="Instance.ServerHost.CommandHint">輸入指令後按 Enter，如 stop、list、op 玩家名</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.NoInstance">未選擇實例</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.NoJar">尚未下載伺服器，點「一鍵開服」會自動下載</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.Ready">伺服器已就緒</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.Running">伺服器運行中</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.Downloading">正在下載伺服器……</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.DownloadingStart">正在下載 {0} 的官方伺服器……</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Downloaded">伺服器下載完成</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Starting">正在啟動伺服器：Java={0}，記憶體={1} MB，埠={2}</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Stopping">正在停止伺服器……</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.NoServerDownload">Mojang 沒有給 {0} 提供官方伺服器下載</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.DownloadFailed">伺服器下載失敗，請檢查網路</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.PrepareFailed">寫入伺服器設定失敗</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.StartFailed">伺服器啟動失敗，請查看主控台輸出</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.NotRunning">伺服器未在運行</sys:String>
     <sys:String x:Key="Instance.Left.Settings">設定</sys:String>
     <sys:String x:Key="Instance.Left.Shaders">光影包</sys:String>
 
