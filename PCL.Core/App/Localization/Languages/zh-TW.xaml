@@ -2461,6 +2461,12 @@
     <!-- Setup.About -->
 
     <sys:String x:Key="Setup.About.Community.Info">Plain Craft Launcher Community Edition 的開發團隊！</sys:String>
+    <sys:String x:Key="Setup.About.Version.Name">目前版本</sys:String>
+    <sys:String x:Key="Setup.About.Fork.Info">基於 PCL CE 的第三方改版：解除功能限制、恢復原版主題與彩蛋</sys:String>
+    <sys:String x:Key="Setup.About.Fork.Home">專案首頁</sys:String>
+    <sys:String x:Key="Setup.About.Legal.ForkSource">本改版原始碼</sys:String>
+    <sys:String x:Key="Setup.About.Legal.ForkNotice">第三方改版聲明</sys:String>
+    <sys:String x:Key="Setup.About.Legal.ForkNoticeText">本軟體是 PCL CE（Plain Craft Launcher Community Edition）的第三方改版，非官方發行版。所有改動由改版作者自行負責，與龍騰貓躍及 PCL Community 無關；如遇問題請勿向上游倉庫回報。</sys:String>
     <sys:String x:Key="Setup.About.Community.Name">PCL Community</sys:String>
     <sys:String x:Key="Setup.About.Contributors.Title">貢獻者們</sys:String>
     <sys:String x:Key="Setup.About.Contributors.ViewMore">檢視更多</sys:String>
@@ -2514,7 +2520,7 @@
 
     <sys:String x:Key="Setup.About.Legal.CommunityLobbyPrivacy">PCL CE 連線大廳隱私政策</sys:String>
     <sys:String x:Key="Setup.About.Legal.CommunitySource">PCL CE 開放原始碼</sys:String>
-    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 PCL Community &amp; 龙腾猫跃.&#xD;非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
+    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 PCL Community &amp; 龍騰貓躍.&#xD;本改版由第三方維護，非官方發行版。&#xD;非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
     <sys:String x:Key="Setup.About.Legal.NatayarkTerms">Natayark OpenID 服務條款</sys:String>
     <sys:String x:Key="Setup.About.Legal.OtherInfo">其他資訊</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyNotice">隱私說明</sys:String>
