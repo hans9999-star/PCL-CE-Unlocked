@@ -934,6 +934,32 @@
     <sys:String x:Key="Instance.Left.Schematics">投影原理图</sys:String>
     <sys:String x:Key="Instance.Left.Screenshots">截图</sys:String>
     <sys:String x:Key="Instance.Left.Servers">服务器</sys:String>
+    <sys:String x:Key="Instance.Left.ServerHost">开服</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Title">便携开服</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Description">在当前实例上直接开一个原版服务端：首次会自动下载官方 server.jar，并写好 eula.txt 与 server.properties，使用启动器已检测到的 Java 启动，无需手动改脚本。</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Console">服务端控制台</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Port">端口</sys:String>
+    <sys:String x:Key="Instance.ServerHost.MaxPlayers">最大玩家数</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Memory">最大内存 (MB)</sys:String>
+    <sys:String x:Key="Instance.ServerHost.OnlineMode">正版验证</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Start">一键开服</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Stop">停止</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Send">发送</sys:String>
+    <sys:String x:Key="Instance.ServerHost.CommandHint">输入命令后回车，如 stop、list、op 玩家名</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.NoInstance">未选择实例</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.NoJar">尚未下载服务端，点「一键开服」会自动下载</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.Ready">服务端已就绪</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.Running">服务端运行中</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.Downloading">正在下载服务端……</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.DownloadingStart">正在下载 {0} 的官方服务端……</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Downloaded">服务端下载完成</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Starting">正在启动服务端：Java={0}，内存={1} MB，端口={2}</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Stopping">正在停止服务端……</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.NoServerDownload">Mojang 没有给 {0} 提供官方服务端下载</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.DownloadFailed">服务端下载失败，请检查网络</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.PrepareFailed">写入服务端配置失败</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.StartFailed">服务端启动失败，请查看控制台输出</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.NotRunning">服务端未在运行</sys:String>
     <sys:String x:Key="Instance.Left.Settings">设置</sys:String>
     <sys:String x:Key="Instance.Left.Shaders">光影包</sys:String>
 
