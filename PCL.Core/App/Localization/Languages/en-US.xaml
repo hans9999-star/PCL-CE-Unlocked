@@ -3544,9 +3544,9 @@
     <sys:String x:Key="Tools.Test.Title">Utilities</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.Error">An unexpected error occurred while triggering the Don't Click easter egg.</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.Title">Don't Click</sys:String>
-    <sys:String x:Key="Tools.Test.DontClick.LastWarn.Message">The PCL author will not accept any bug reports caused by clicking Don't Click.&amp;#xA;This is the final warning. Do you want to continue?</sys:String>
+    <sys:String x:Key="Tools.Test.DontClick.LastWarn.Message">The PCL author will not accept any bug reports caused by clicking Don't Click.&#xA;This is the final warning. Do you want to continue?</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.ToolTip">Seriously, don't click</sys:String>
-    <sys:String x:Key="Tools.Test.DontClick.Warn.Message">A very small number of people may experience epileptic seizures when exposed to the scene after clicking OK. This can happen even in people who have no history of epilepsy, if an undetected condition is present. If you or any family member has ever had similar symptoms, please consult your doctor before clicking OK. If you experience any symptoms afterwards, including dizziness, altered vision, eye or muscle twitching, loss of awareness, disorientation, or involuntary movements, please close PCL immediately and consult your doctor.&amp;#xA;This is the final warning. Do you want to continue?</sys:String>
+    <sys:String x:Key="Tools.Test.DontClick.Warn.Message">A very small number of people may experience epileptic seizures when exposed to the scene after clicking OK. This can happen even in people who have no history of epilepsy, if an undetected condition is present. If you or any family member has ever had similar symptoms, please consult your doctor before clicking OK. If you experience any symptoms afterwards, including dizziness, altered vision, eye or muscle twitching, loss of awareness, disorientation, or involuntary movements, please close PCL immediately and consult your doctor.&#xA;This is the final warning. Do you want to continue?</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.Warn.Title">Warning</sys:String>
 
 
