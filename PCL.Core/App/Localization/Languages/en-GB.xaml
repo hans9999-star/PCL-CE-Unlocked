@@ -925,6 +925,32 @@
     <sys:String x:Key="Instance.Left.Schematics">Schematics</sys:String>
     <sys:String x:Key="Instance.Left.Screenshots">Screenshots</sys:String>
     <sys:String x:Key="Instance.Left.Servers">Servers</sys:String>
+    <sys:String x:Key="Instance.Left.ServerHost">Host Server</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Title">Portable Server Hosting</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Description">Host a vanilla server directly from this instance. The official server.jar is downloaded automatically, eula.txt and server.properties are written for you, and the launcher detected Java is used - no script editing needed.</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Console">Server Console</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Port">Port</sys:String>
+    <sys:String x:Key="Instance.ServerHost.MaxPlayers">Max Players</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Memory">Max Memory (MB)</sys:String>
+    <sys:String x:Key="Instance.ServerHost.OnlineMode">Online Mode</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Start">Start Server</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Stop">Stop</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Send">Send</sys:String>
+    <sys:String x:Key="Instance.ServerHost.CommandHint">Type a command and press Enter, e.g. stop, list, op &lt;player&gt;</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.NoInstance">No instance selected</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.NoJar">Server not downloaded yet; click Start Server to fetch it automatically</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.Ready">Server ready</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.Running">Server running</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Status.Downloading">Downloading server...</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.DownloadingStart">Downloading the official server for {0}...</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Downloaded">Server downloaded</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Starting">Starting server: Java={0}, memory={1} MB, port={2}</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Stopping">Stopping server...</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.NoServerDownload">Mojang does not provide an official server download for {0}</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.DownloadFailed">Failed to download the server, please check your network</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.PrepareFailed">Failed to write server configuration</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.StartFailed">Failed to start the server, see the console output</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.NotRunning">The server is not running</sys:String>
     <sys:String x:Key="Instance.Left.Settings">Settings</sys:String>
     <sys:String x:Key="Instance.Left.Shaders">Shaders</sys:String>
 
