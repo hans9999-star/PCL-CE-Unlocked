@@ -780,7 +780,7 @@ public partial class PageLinkMain
         ModBase.RunInUi(() =>
         {
             TextServerConsole.AppendText(text);
-            TextServerConsole.ScrollToEnd();
+            PanServerConsole.ScrollToEnd();
         });
     }
 
