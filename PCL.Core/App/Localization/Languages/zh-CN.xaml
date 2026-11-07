@@ -3428,6 +3428,12 @@
     <sys:String x:Key="Tools.GameLink.Link.CreateSubtitle">邀请朋友加入你的单人游戏。</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostTitle">本地开服</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostSubtitle">在当前实例上开一个原版服务端，开好后可以分享给朋友一起玩。</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostType">服务端类型</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostVersion">版本</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Vanilla">原版</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Paper">Paper（插件端）</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostLoadingVersions">正在获取版本列表……</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostNoVersions">获取版本列表失败，请检查网络</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostPort">端口</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostMaxPlayers">最大玩家数</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostMemory">最大内存 (MB)</sys:String>
