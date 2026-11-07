@@ -3392,6 +3392,15 @@
     <sys:String x:Key="Tools.GameLink.Link.CreateAction">Create Room</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.JoinTitle">Join Room</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.JoinDesc">Click "Join Room" below and enter the invite code from the host.&#xA;After joining, launch the game and you will find the room at the bottom of the Multiplayer page.</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.CreateSubtitle">Invite friends to join your single-player game.</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.JoinSubtitle">Enter the invite code you received to join your friend's room.</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PingTip">Ping</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PlayerTip">Players in room</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PortTip">Port</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.IpTip">Server IP (click to copy)</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PlayerUnit">{0} players</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PingUnit">{0} ms</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.Finish.PingConnecting">Connecting</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.JoinAction">Join Room</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.Finish.Copied">Copied to clipboard</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.Finish.Created">Room Created</sys:String>
