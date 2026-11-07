@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Markup;
@@ -214,6 +214,12 @@ public partial class PageComp
     /// </summary>
     public static McInstance targetVersion;
 
+    /// <summary>
+    ///     服务端模式下的下载筛选目标（分支新增）。<br/>
+    ///     非空时按服务端的版本号与加载器设置筛选器，优先于 <see cref="targetVersion" />。
+    /// </summary>
+    public static ServerContentTarget? targetServerContent;
+
     // 在点击 MyCompItem 时会获取 Loader 的输入，以使资源详情页面可以应用相同的筛选项
     public ModLoader.LoaderTask<ModComp.CompProjectRequest, int> loader;
 
@@ -239,8 +245,38 @@ public partial class PageComp
 
     private void PageCompControls_Inited(object sender, EventArgs e)
     {
-        // 不知道从 Initialized 改成 Loaded 会不会有问题，但用 Initialized 会导致初始的筛选器修改被覆盖回默认值
-        if (targetVersion is not null)
+        // 分支说明：服务端模式下按服务端目标设置筛选器（版本 + 加载器）
+        if (targetServerContent is not null)
+        {
+            var target = targetServerContent;
+            targetServerContent = null;
+            targetVersion = null;
+            ResetFilter();
+            TextSearchVersion.Text = target.VanillaName;
+
+            // 插件端的 Paper 加载器在 PageComp.xaml 里没有预设项，这里按需补上
+            if (target.CompType == ModComp.CompType.Plugin &&
+                !ComboSearchLoader.Items.OfType<MyComboBoxItem>()
+                    .Any(i => i.Tag?.ToString() == ((int)ModComp.CompLoaderType.Paper).ToString()))
+                ComboSearchLoader.Items.Add(new MyComboBoxItem
+                {
+                    Content = Lang.Text("Common.Installation.Paper"),
+                    Tag = ((int)ModComp.CompLoaderType.Paper).ToString()
+                });
+
+            var wanted = ((int)target.Loaders.FirstOrDefault()).ToString();
+            foreach (MyComboBoxItem item in ComboSearchLoader.Items)
+                if (item.Tag?.ToString() == wanted)
+                {
+                    ComboSearchLoader.SelectedItem = item;
+                    break;
+                }
+
+            if (isLoaderInited)
+                StartNewSearch();
+            ScrollToHome();
+        }
+        else if (targetVersion is not null)
         {
             // 设置目标
             ResetFilter(); // 重置筛选器
