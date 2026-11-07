@@ -783,12 +783,41 @@ public partial class PageLinkMain
     {
         1 => ServerSoftware.Paper,
         2 => ServerSoftware.Fabric,
+        3 => ServerSoftware.Forge,
+        4 => ServerSoftware.NeoForge,
         _ => ServerSoftware.Vanilla
     };
 
-    /// <summary>当前选择的服务端版本（与实例无关）。</summary>
+    /// <summary>
+    ///     当前选择的服务端版本（与实例无关）。<br/>
+    ///     Forge / NeoForge 需要额外信息（Forge 要 MC+Loader 两段、NeoForge 的版本号
+    ///     与 MC 版本不同），因此把真正的取值放在 Tag 上，Content 只用于显示。
+    /// </summary>
     private string SelectedVersion =>
-        (ComboServerVersion.SelectedItem as MyComboBoxItem)?.Content?.ToString() ?? "";
+        (ComboServerVersion.SelectedItem as MyComboBoxItem)?.Tag?.ToString()
+        ?? (ComboServerVersion.SelectedItem as MyComboBoxItem)?.Content?.ToString()
+        ?? "";
+
+    /// <summary>把版本原始值格式化成下拉框里显示的文本。</summary>
+    private static string FormatVersionItem(ServerSoftware software, string value)
+    {
+        if (software == ServerSoftware.Forge)
+        {
+            var parts = value.Split('|');
+            return parts.Length == 2 ? $"{parts[0]} · Forge {parts[1]}" : value;
+        }
+
+        if (software == ServerSoftware.NeoForge)
+        {
+            // NeoForge 版本号形如 21.1.209 → MC 1.21.1；26.x 起 MC 号不再带前导 1
+            var p = value.Split('.');
+            if (p.Length >= 2 && int.TryParse(p[0], out var major) && int.TryParse(p[1], out var minor))
+                return major >= 26 ? $"{major}.{minor} · NeoForge {value}" : $"1.{major}.{minor} · NeoForge {value}";
+            return value;
+        }
+
+        return value;
+    }
 
     private void BtnServerHost_Click(object sender, MouseButtonEventArgs e)
     {
@@ -817,13 +846,17 @@ public partial class PageLinkMain
             return;
         }
 
-        var jarExists = File.Exists(ModServerHost.GetJarPath(SelectedSoftware, version));
+        var software = SelectedSoftware;
+        var needsInstaller = software is ServerSoftware.Forge or ServerSoftware.NeoForge;
+        var installed = needsInstaller
+            ? ModServerHost.FindArgsFile(ModServerHost.GetServerDir(software, version)) is not null
+            : File.Exists(ModServerHost.GetJarPath(software, version));
         LabServerStatus.Text = (running
             ? Lang.Text("Instance.ServerHost.Status.Running")
-            : jarExists
+            : installed
                 ? Lang.Text("Instance.ServerHost.Status.Ready")
                 : Lang.Text("Instance.ServerHost.Status.NoJar"))
-            + "  ·  " + version;
+            + "  ·  " + FormatVersionItem(software, version);
         BtnServerStart.IsEnabled = !running;
         BtnServerStop.IsEnabled = running;
         BtnServerShare.IsEnabled = running;
@@ -843,6 +876,10 @@ public partial class PageLinkMain
                 { Content = Lang.Text("Tools.GameLink.Link.ServerHostType.Paper") });
             ComboServerType.Items.Add(new MyComboBoxItem
                 { Content = Lang.Text("Tools.GameLink.Link.ServerHostType.Fabric") });
+            ComboServerType.Items.Add(new MyComboBoxItem
+                { Content = Lang.Text("Tools.GameLink.Link.ServerHostType.Forge") });
+            ComboServerType.Items.Add(new MyComboBoxItem
+                { Content = Lang.Text("Tools.GameLink.Link.ServerHostType.NeoForge") });
             ComboServerType.SelectedIndex = 0;
         }
 
@@ -862,7 +899,8 @@ public partial class PageLinkMain
         }
 
         foreach (var v in list)
-            ComboServerVersion.Items.Add(new MyComboBoxItem { Content = v });
+            ComboServerVersion.Items.Add(new MyComboBoxItem
+                { Content = FormatVersionItem(software, v), Tag = v });
         ComboServerVersion.SelectedIndex = 0;
         RefreshServerHostStatus();
     }
@@ -884,33 +922,10 @@ public partial class PageLinkMain
 
         var software = SelectedSoftware;
         var dir = ModServerHost.GetServerDir(software, version);
-        var jarPath = ModServerHost.GetJarPath(software, version);
+        var showVersion = FormatVersionItem(software, version);
+        var needsInstaller = software is ServerSoftware.Forge or ServerSoftware.NeoForge;
 
-        if (!File.Exists(jarPath))
-        {
-            BtnServerStart.IsEnabled = false;
-            LabServerStatus.Text = Lang.Text("Instance.ServerHost.Status.Downloading");
-            ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.DownloadingStart", version));
-
-            var resolved = await ModServerHost.ResolveDownloadAsync(software, version).ConfigureAwait(true);
-            if (resolved is null)
-            {
-                HintService.Hint(Lang.Text("Instance.ServerHost.Error.NoServerDownload", version), HintType.Error);
-                RefreshServerHostStatus();
-                return;
-            }
-
-            var (urls, _, size) = resolved.Value;
-            if (!await ModServerHost.DownloadJarAsync(urls, jarPath, size).ConfigureAwait(true))
-            {
-                HintService.Hint(Lang.Text("Instance.ServerHost.Error.DownloadFailed"), HintType.Error);
-                RefreshServerHostStatus();
-                return;
-            }
-
-            ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Downloaded"));
-        }
-
+        // 解析配置
         var port = int.TryParse(TextServerPort.Text?.Trim(), out var p) && p is > 0 and < 65536 ? p : 25565;
         var maxPlayers = int.TryParse(TextServerMaxPlayers.Text?.Trim(), out var m) && m > 0 ? m : 20;
         var memory = int.TryParse(TextServerMemory.Text?.Trim(), out var mem) && mem >= 512 ? mem : 2048;
@@ -927,6 +942,90 @@ public partial class PageLinkMain
             HintService.Hint(Lang.Text("Instance.ServerHost.Error.PrepareFailed"), HintType.Error);
             RefreshServerHostStatus();
             return;
+        }
+
+        // ---------- Forge / NeoForge：先安装，再按生成的参数文件启动 ----------
+        if (needsInstaller)
+        {
+            var argsRel = ModServerHost.FindArgsFile(dir);
+            if (argsRel is null)
+            {
+                BtnServerStart.IsEnabled = false;
+                LabServerStatus.Text = Lang.Text("Instance.ServerHost.Status.Downloading");
+                ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.DownloadingStart", showVersion));
+
+                var resolved = await ModServerHost.ResolveDownloadAsync(software, version).ConfigureAwait(true);
+                if (resolved is null)
+                {
+                    HintService.Hint(Lang.Text("Instance.ServerHost.Error.NoServerDownload", showVersion),
+                        HintType.Error);
+                    RefreshServerHostStatus();
+                    return;
+                }
+
+                var installerPath = Path.Combine(dir, "installer.jar");
+                if (!await ModServerHost
+                        .DownloadJarAsync(resolved.Value.Urls, installerPath, resolved.Value.Size)
+                        .ConfigureAwait(true))
+                {
+                    HintService.Hint(Lang.Text("Instance.ServerHost.Error.DownloadFailed"), HintType.Error);
+                    RefreshServerHostStatus();
+                    return;
+                }
+
+                ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Downloaded"));
+                ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Installing"));
+                if (!await ModServerHost.RunInstallerAsync(dir, installerPath).ConfigureAwait(true))
+                {
+                    HintService.Hint(Lang.Text("Instance.ServerHost.Error.InstallFailed"), HintType.Error);
+                    RefreshServerHostStatus();
+                    return;
+                }
+
+                argsRel = ModServerHost.FindArgsFile(dir);
+                if (argsRel is null)
+                {
+                    HintService.Hint(Lang.Text("Instance.ServerHost.Error.InstallFailed"), HintType.Error);
+                    RefreshServerHostStatus();
+                    return;
+                }
+            }
+
+            ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Starting",
+                ModServerHost.GetJavaPath(), memory, port));
+            if (!ModServerHost.StartWithArgsFile(dir, argsRel, memory))
+                HintService.Hint(Lang.Text("Instance.ServerHost.Error.StartFailed"), HintType.Error);
+
+            RefreshServerHostStatus();
+            return;
+        }
+
+        // ---------- 原版 / Paper / Fabric：下载 jar 后直接 -jar 启动 ----------
+        var jarPath = ModServerHost.GetJarPath(software, version);
+        if (!File.Exists(jarPath))
+        {
+            BtnServerStart.IsEnabled = false;
+            LabServerStatus.Text = Lang.Text("Instance.ServerHost.Status.Downloading");
+            ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.DownloadingStart", showVersion));
+
+            var resolved = await ModServerHost.ResolveDownloadAsync(software, version).ConfigureAwait(true);
+            if (resolved is null)
+            {
+                HintService.Hint(Lang.Text("Instance.ServerHost.Error.NoServerDownload", showVersion),
+                    HintType.Error);
+                RefreshServerHostStatus();
+                return;
+            }
+
+            var (urls, _, size) = resolved.Value;
+            if (!await ModServerHost.DownloadJarAsync(urls, jarPath, size).ConfigureAwait(true))
+            {
+                HintService.Hint(Lang.Text("Instance.ServerHost.Error.DownloadFailed"), HintType.Error);
+                RefreshServerHostStatus();
+                return;
+            }
+
+            ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Downloaded"));
         }
 
         ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Starting",
