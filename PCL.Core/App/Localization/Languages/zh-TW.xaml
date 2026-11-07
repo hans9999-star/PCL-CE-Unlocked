@@ -3488,9 +3488,9 @@
     <sys:String x:Key="Tools.Test.Title">百寶箱</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.Error">觸發千萬別點彩蛋時出現未知錯誤。</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.Title">千萬別點</sys:String>
-    <sys:String x:Key="Tools.Test.DontClick.LastWarn.Message">PCL 作者不會受理由於點擊千萬別點造成的任何 Bug。&amp;#xA;這是最後的警告，是否繼續操作？</sys:String>
+    <sys:String x:Key="Tools.Test.DontClick.LastWarn.Message">PCL 作者不會受理由於點擊千萬別點造成的任何 Bug。&#xA;這是最後的警告，是否繼續操作？</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.ToolTip">真的千萬別點</sys:String>
-    <sys:String x:Key="Tools.Test.DontClick.Warn.Message">當暴露在點擊確定後的場景時，有極小部分人群會引發癲癇。這種情形可能是由於某些未查出的癲癇症狀引起，即使該人員並沒有患癲癇病史也有可能造成此類病症。如果您的家人或任何家庭成員曾有過類似症狀，請在點擊確定前諮詢您的醫生或醫師。如果您在稍後出現任何症狀，包括頭暈、目眩、眼部或肌肉抽搐、失去意識、失去方向感、抽搐或出現任何自己無法控制的動作，請立即關閉 PCL 並諮詢您的醫生或醫師。&amp;#xA;這是最後的警告，是否繼續操作？</sys:String>
+    <sys:String x:Key="Tools.Test.DontClick.Warn.Message">當暴露在點擊確定後的場景時，有極小部分人群會引發癲癇。這種情形可能是由於某些未查出的癲癇症狀引起，即使該人員並沒有患癲癇病史也有可能造成此類病症。如果您的家人或任何家庭成員曾有過類似症狀，請在點擊確定前諮詢您的醫生或醫師。如果您在稍後出現任何症狀，包括頭暈、目眩、眼部或肌肉抽搐、失去意識、失去方向感、抽搐或出現任何自己無法控制的動作，請立即關閉 PCL 並諮詢您的醫生或醫師。&#xA;這是最後的警告，是否繼續操作？</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.Warn.Title">警告</sys:String>
 
 
