@@ -3545,9 +3545,9 @@
     <sys:String x:Key="Tools.Test.Title">百宝箱</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.Error">触发千万别点彩蛋时出现未知错误。</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.Title">千万别点</sys:String>
-    <sys:String x:Key="Tools.Test.DontClick.LastWarn.Message">PCL 作者不会受理由于点击千万别点造成的任何 Bug。&amp;#xA;这是最后的警告，是否继续操作？</sys:String>
+    <sys:String x:Key="Tools.Test.DontClick.LastWarn.Message">PCL 作者不会受理由于点击千万别点造成的任何 Bug。&#xA;这是最后的警告，是否继续操作？</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.ToolTip">真的千万别点</sys:String>
-    <sys:String x:Key="Tools.Test.DontClick.Warn.Message">当暴露在点击确定后的场景时，有极小部分人群会引发癲痫。这种情形可能是由于某些未查出的癫病症状引起，即使该人员并没有患癫痫病史也有可能造成此类病症。如果您的家人或任何家庭成员曾有过类似症状，请在点击确定前咨询您的医生或医师。如果您在稍后出现任何症状，包括头晕、目眩、眼部或肌肉抽搐、失去意识、失去方向感、抽搐或出现任何自己无法控制的动作，请立即关闭 PCL 并咨询您的医生或医师。&amp;#xA;这是最后的警告，是否继续操作？</sys:String>
+    <sys:String x:Key="Tools.Test.DontClick.Warn.Message">当暴露在点击确定后的场景时，有极小部分人群会引发癲痫。这种情形可能是由于某些未查出的癫病症状引起，即使该人员并没有患癫痫病史也有可能造成此类病症。如果您的家人或任何家庭成员曾有过类似症状，请在点击确定前咨询您的医生或医师。如果您在稍后出现任何症状，包括头晕、目眩、眼部或肌肉抽搐、失去意识、失去方向感、抽搐或出现任何自己无法控制的动作，请立即关闭 PCL 并咨询您的医生或医师。&#xA;这是最后的警告，是否继续操作？</sys:String>
     <sys:String x:Key="Tools.Test.DontClick.Warn.Title">警告</sys:String>
 
 
