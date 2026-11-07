@@ -186,6 +186,23 @@
                                                     Click="BtnServerShare_Click" />
                                 </StackPanel>
                             </Grid>
+                            <!-- 分支说明：服务端类型与版本独立于当前实例选择。 -->
+                            <Grid Margin="10,0,10,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="20" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="170" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
+                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostType}" />
+                                <local:MyComboBox Grid.Column="1" x:Name="ComboServerType"
+                                                  SelectionChanged="ComboServerType_SelectionChanged" />
+                                <TextBlock Grid.Column="3" VerticalAlignment="Center" Margin="0,0,10,0"
+                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostVersion}" />
+                                <local:MyComboBox Grid.Column="4" x:Name="ComboServerVersion" />
+                            </Grid>
                             <Grid Margin="10,2,10,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
