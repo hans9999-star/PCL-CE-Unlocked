@@ -117,6 +117,22 @@ public partial class PageLinkMain
         CurrentSubpage = Subpages.PanSelect;
     }
 
+    private void BtnEulaStop_Click(object sender, EventArgs eventArgs)
+    {
+        if (ModMain.MyMsgBox(Lang.Text("Tools.GameLink.Eula.RevokeConfirm"),
+                Lang.Text("Tools.GameLink.Eula.RevokeTitle"),
+                Lang.Text("Common.Action.Confirm"),
+                Lang.Text("Common.Action.Cancel"),
+                isWarn: true
+            ) == 1)
+        {
+            States.Link.NaidRefreshTokenConfig.Reset();
+            States.Link.LinkEulaConfig.Reset();
+            HintService.Hint(Lang.Text("Tools.GameLink.Eula.Disabled"));
+            CurrentSubpage = Subpages.PanEula;
+        }
+    }
+
     private static readonly ModLoader.LoaderCombo<int> initLoader;
 
     private static async void InitTask(ModLoader.LoaderTask<int, int> task)
@@ -502,6 +518,35 @@ public partial class PageLinkMain
 
                 #endregion
 
+                #region 处理账户登录状态显示
+
+                if (string.IsNullOrWhiteSpace(States.Link.NaidRefreshToken))
+                {
+                    ModBase.RunInUi(() => LabNatayarkUserName.Text = Lang.Text("Tools.GameLink.Natayark.Login"));
+                }
+                else
+                {
+                    ModBase.RunInUi(() => LabNatayarkUserName.Text = Lang.Text("Tools.GameLink.Natayark.Loading"));
+                    if (string.IsNullOrEmpty(NatayarkProfileManager.NaidProfile.Username))
+                        ReloadNaidData();
+                    else
+                        ModBase.RunInUi(() =>
+                        {
+                            if (NatayarkProfileManager.NaidProfile.Status == 0)
+                            {
+                                LabNatayarkUserName.Text = NatayarkProfileManager.NaidProfile.Username;
+                                LabNatayarkUserName.Opacity = 1;
+                            }
+                            else
+                            {
+                                LabNatayarkUserName.Text = $"{NatayarkProfileManager.NaidProfile.Username} {Lang.Text("Tools.GameLink.Natayark.Abnormal")}";
+                                LabNatayarkUserName.Opacity = 0.6;
+                            }
+                        });
+                }
+
+                #endregion
+
                 ModBase.RunInUi(() =>
                 {
                     if (!IsCurrentAnnouncementRequest(requestId)) return;
@@ -583,6 +628,147 @@ public partial class PageLinkMain
     }
 
     #endregion
+
+    #region Natayark 账户相关功能
+
+    private void ReloadNaidData()
+    {
+        ModBase.RunInNewThread(() =>
+        {
+            try
+            {
+                #region 1. 登录令牌有效期检查
+
+                // 检查 Token 是否过期
+                var expireTime = Convert.ToDateTime(States.Link.NaidRefreshExpireTime);
+                if (expireTime.CompareTo(DateTime.Now) < 0)
+                {
+                    States.Link.NaidRefreshToken = "";
+                    HintService.Hint(Lang.Text("Tools.GameLink.Natayark.TokenExpired"), HintType.Error);
+                    return;
+                }
+
+                #endregion
+
+                #region 2. 异步获取数据并同步等待
+
+                // 调用异步方法并阻塞获取结果
+                NatayarkProfileManager.GetNaidDataAsync(States.Link.NaidRefreshToken, true).GetAwaiter().GetResult();
+
+                // 等待用户名加载，设置 10 秒超时防止线程卡死
+                var retryCount = 0;
+                while (string.IsNullOrWhiteSpace(NatayarkProfileManager.NaidProfile.Username) && retryCount < 10)
+                {
+                    Thread.Sleep(1000);
+                    retryCount++;
+                }
+
+                if (string.IsNullOrWhiteSpace(NatayarkProfileManager.NaidProfile.Username))
+                    throw new Exception("Timeout waiting for username");
+
+                #endregion
+
+                #region 3. UI 状态更新
+
+                ModBase.RunInUi(() =>
+                {
+                    var profile = NatayarkProfileManager.NaidProfile;
+
+                    // 状态 0 为正常
+                    if (profile.Status == 0)
+                    {
+                        LabNatayarkUserName.Text = profile.Username;
+                        LabNatayarkUserName.Opacity = 1.0;
+                    }
+                    else
+                    {
+                        LabNatayarkUserName.Text = $"{profile.Username} {Lang.Text("Tools.GameLink.Natayark.Abnormal")}";
+                        LabNatayarkUserName.Opacity = 0.6;
+                    }
+                });
+
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                #region 错误处理
+
+                ModBase.Log(ex, "Failed to refresh Natayark ID info, re-login required");
+
+                ModBase.RunInUi(() =>
+                {
+                    LabNatayarkUserName.Text = Lang.Text("Tools.GameLink.Natayark.FetchFailed");
+                    LabNatayarkUserName.Opacity = 0.6;
+                });
+
+                #endregion
+            }
+        }, "Natayark Profile Refresh");
+    }
+
+    private void LabNatayarkUserName_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        // If Not IsLobbyAvailable Then
+        // Hint("大厅功能暂不可用，请稍后再试", HintType.Critical)
+        // Exit Sub
+        // End If
+
+        if (string.IsNullOrWhiteSpace(States.Link.NaidRefreshToken))
+        {
+            // 当前未登录，显示登录选项
+            if (ModMain.MyMsgBox(Lang.Text("Tools.GameLink.Natayark.LoginPrompt"), Lang.Text("Tools.GameLink.Natayark.LoginTitle"), Lang.Text("Tools.GameLink.Natayark.Continue"), Lang.Text("Common.Action.Cancel")) == 1)
+            {
+                LabNatayarkUserName.Text = Lang.Text("Tools.GameLink.Natayark.BrowserContinue");
+                LabNatayarkUserName.Opacity = 0.6d;
+                BtnNatayarkUserName.IsEnabled = false;
+                ModWebServer.StartNaidAuthorize(() =>
+                {
+                    ModBase.RunInUi(() => BtnNatayarkUserName.IsEnabled = true);
+                    HintService.Hint(Lang.Text("Tools.GameLink.Natayark.LoginComplete"), HintType.Success);
+                    ReloadNaidData();
+                });
+            }
+        }
+        // 当前已登录，显示登出选项
+        else if (ModMain.MyMsgBox(Lang.Text("Tools.GameLink.Natayark.LogoutConfirm"), Lang.Text("Tools.GameLink.Natayark.LogoutTitle"), Lang.Text("Common.Action.Confirm"), Lang.Text("Common.Action.Cancel")) == 1)
+        {
+            States.Link.NaidRefreshTokenConfig.Reset();
+            States.Link.NaidRefreshToken = "";
+            LabNatayarkUserName.Text = Lang.Text("Tools.GameLink.Natayark.Login");
+            ModBase.Log("[Link] 已退出登录 Natayark Network");
+            HintService.Hint(Lang.Text("Tools.GameLink.Natayark.LogoutComplete"), HintType.Success, false);
+        }
+    }
+
+    #endregion
+
+    // 网络测试功能
+    private async void BtnNetTest_Click(object sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            BtnNatTest.IsEnabled = false;
+            LabNatType.Text = Lang.Text("Tools.GameLink.Nat.Testing");
+            var status = await CliNetTest.GetNetStatusAsync();
+            ModBase.RunInUi(() => LabNatType.Text = Lang.Text("Tools.GameLink.Nat.Result",
+                CliNetTest.GetNatTypeString(status.UdpNatType),
+                CliNetTest.GetNatTypeString(status.TcpNatType)));
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(
+                ex,
+                "[Link] 获取网络测试结果失败",
+                ModBase.LogLevel.Hint,
+                userSummary: Lang.Text("Tools.GameLink.Error.NetworkTestFailed"));
+            BtnNatTest.IsEnabled = true;
+            LabNatType.Text = Lang.Text("Tools.GameLink.Nat.Failed");
+        }
+        finally
+        {
+            BtnNatTest.IsEnabled = true;
+        }
+    }
 
     private void PasteLobbyId(object sender, MouseButtonEventArgs e)
     {
