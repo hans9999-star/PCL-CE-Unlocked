@@ -87,7 +87,6 @@ public static class ModMain
     public static PageInstanceInstall? frmInstanceInstall;
     public static PageInstanceExport? frmInstanceExport;
     public static PageInstanceServer? frmInstanceServer;
-    public static PageInstanceServerHost? frmInstanceServerHost;
     public static PageInstanceSavesLeft? frmInstanceSavesLeft;
     public static PageInstanceSavesInfo? frmInstanceSavesInfo;
     public static PageInstanceSavesDatapack? frmInstanceSavesDatapack;
