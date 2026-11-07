@@ -1,10 +1,10 @@
 {
   "name": "PCL CE Unlocked",
   "version": {
-    "base": "1.0.0",
+    "base": "1.0.3",
     "upstream": "2.12.1",
     "suffix": "",
-    "code": 100
+    "code": 103
   },
   "licenses": [
     {
