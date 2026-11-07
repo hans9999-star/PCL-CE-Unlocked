@@ -2508,6 +2508,12 @@
     <!-- Setup.About -->
 
     <sys:String x:Key="Setup.About.Community.Info">The development team of Plain Craft Launcher Community Edition!</sys:String>
+    <sys:String x:Key="Setup.About.Version.Name">Current Version</sys:String>
+    <sys:String x:Key="Setup.About.Fork.Info">A third-party fork of PCL CE: restrictions removed, original themes and easter eggs restored</sys:String>
+    <sys:String x:Key="Setup.About.Fork.Home">Project Home</sys:String>
+    <sys:String x:Key="Setup.About.Legal.ForkSource">Fork Source Code</sys:String>
+    <sys:String x:Key="Setup.About.Legal.ForkNotice">Third-Party Fork Notice</sys:String>
+    <sys:String x:Key="Setup.About.Legal.ForkNoticeText">This software is a third-party fork of PCL CE (Plain Craft Launcher Community Edition) and is not an official release. All changes are the responsibility of the fork author and are unrelated to LTCat or PCL Community; please do not report issues to the upstream repository.</sys:String>
     <sys:String x:Key="Setup.About.Community.Name">PCL Community</sys:String>
     <sys:String x:Key="Setup.About.Contributors.Title">Contributors</sys:String>
     <sys:String x:Key="Setup.About.Contributors.ViewMore">View more</sys:String>
@@ -2561,7 +2567,7 @@
 
     <sys:String x:Key="Setup.About.Legal.CommunityLobbyPrivacy">Community lobby privacy policy</sys:String>
     <sys:String x:Key="Setup.About.Legal.CommunitySource">PCL CE source code</sys:String>
-    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © PCL Community &amp; LTCat (龙腾猫跃) 2026.&#xD;NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.</sys:String>
+    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 PCL Community &amp; LTCat.&#xD;This fork is maintained by a third party and is not an official release.&#xD;NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.</sys:String>
     <sys:String x:Key="Setup.About.Legal.NatayarkTerms">Natayark OpenID ToS</sys:String>
     <sys:String x:Key="Setup.About.Legal.OtherInfo">Other information</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyNotice">Privacy statement</sys:String>
