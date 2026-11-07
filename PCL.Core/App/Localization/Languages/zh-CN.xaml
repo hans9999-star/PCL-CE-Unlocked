@@ -3433,6 +3433,10 @@
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Vanilla">原版</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Paper">Paper（插件端）</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Fabric">Fabric（模组端）</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Forge">Forge（模组端）</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostType.NeoForge">NeoForge（模组端）</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Log.Installing">正在执行 Forge/NeoForge 安装器，需下载大量依赖，可能要几分钟……</sys:String>
+    <sys:String x:Key="Instance.ServerHost.Error.InstallFailed">服务端安装失败，请查看控制台输出</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostLoadingVersions">正在获取版本列表……</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostNoVersions">获取版本列表失败，请检查网络</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostPort">端口</sys:String>
