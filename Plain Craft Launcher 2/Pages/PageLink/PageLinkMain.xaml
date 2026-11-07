@@ -100,6 +100,44 @@
                     </local:MyCard>
                 </StackPanel>
                 <StackPanel x:Name="PanSelect" Grid.Row="1" HorizontalAlignment="Stretch" Orientation="Vertical">
+                    <StackPanel Margin="10,4" HorizontalAlignment="Right" Orientation="Horizontal">
+                        <local:MyCard Margin="12,0" x:Name="BtnNatTest">
+                            <StackPanel Orientation="Horizontal"
+                                        Background="{StaticResource ColorBrushSemiTransparent}"
+                                        MouseLeftButtonUp="BtnNetTest_Click"
+                                        ToolTip="{DynamicResource Tools.GameLink.Nat.Title}"
+                                        ToolTipService.Placement="Center" ToolTipService.InitialShowDelay="100"
+                                        ToolTipService.VerticalOffset="-35">
+                                <svgIcon:SvgIcon IsHitTestVisible="False"
+                                             Width="14" Stretch="Uniform"
+                                             IconBrush="{DynamicResource ColorBrushGray1}"
+                                             Margin="12,0,7,0"
+                                             Icon="lucide/ethernet-port" />
+                                <TextBlock x:Name="LabNatType" IsHitTestVisible="False"
+                                           Text="{DynamicResource Tools.GameLink.Nat.Test}" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource ColorBrushGray1}" Margin="0,0,12,0" />
+                            </StackPanel>
+                        </local:MyCard>
+
+                        <local:MyCard x:Name="BtnNatayarkUserName">
+                            <StackPanel Orientation="Horizontal"
+                                        Background="{StaticResource ColorBrushSemiTransparent}"
+                                        ToolTip="{DynamicResource Tools.GameLink.Natayark.Account}"
+                                        ToolTipService.Placement="Center"
+                                        ToolTipService.InitialShowDelay="100" ToolTipService.VerticalOffset="-35">
+                                <svgIcon:SvgIcon IsHitTestVisible="False"
+                                             Width="14" Stretch="Uniform"
+                                             IconBrush="{DynamicResource ColorBrushGray1}"
+                                             Margin="12,0,7,0"
+                                             Icon="lucide/user" />
+                                <TextBlock x:Name="LabNatayarkUserName"
+                                           MouseLeftButtonUp="LabNatayarkUserName_MouseLeftButtonUp"
+                                           Text="{DynamicResource Tools.GameLink.Natayark.Login}"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource ColorBrushGray1}" Margin="0,0,12,0" />
+                            </StackPanel>
+                        </local:MyCard>
+                    </StackPanel>
                     <local:MyCard x:Name="BtnSelectJoin" Margin="10"
                                   Title="{DynamicResource Tools.GameLink.Join.Title}">
                         <StackPanel Margin="10,30,10,10">
@@ -146,6 +184,37 @@
                         </StackPanel>
                     </local:MyCard>
                 </StackPanel>
+                <local:MyCard x:Name="PanFooter" Grid.Row="2" Margin="10">
+                    <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical" Opacity="0.75" Margin="8">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="15,6"
+                                    Orientation="Horizontal">
+                            <local:MyTextButton Text="{DynamicResource Tools.GameLink.Link.Report}"
+                                                local:CustomEventService.EventType="OpenUrl"
+                                                local:CustomEventService.EventData="https://qm.qq.com/q/zfml1KaPWS" />
+                            <TextBlock Text=" | " />
+                            <local:MyTextButton Text="{DynamicResource Tools.GameLink.Link.Terms}"
+                                                local:CustomEventService.EventType="OpenUrl"
+                                                local:CustomEventService.EventData="https://account.naids.com/policy" />
+                            <TextBlock Text=" | " />
+                            <local:MyTextButton Text="{DynamicResource Tools.GameLink.Link.Privacy}"
+                                                local:CustomEventService.EventType="OpenUrl"
+                                                local:CustomEventService.EventData="https://www.pclc.cc/privacy/personal-info-brief.html" />
+                            <TextBlock Text=" | " />
+                            <local:MyTextButton Text="{DynamicResource Tools.GameLink.Link.Disable}"
+                                                x:Name="BtnEulaStop" Click="BtnEulaStop_Click" />
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="15,6"
+                                    Orientation="Horizontal">
+                            <TextBlock Text="{DynamicResource Tools.GameLink.Link.Friends}" />
+                            <local:MyTextButton Text="{DynamicResource Tools.GameLink.Link.EasyTier}"
+                                                local:CustomEventService.EventType="OpenUrl"
+                                                local:CustomEventService.EventData="https://easytier.cn/" />
+                            <TextBlock Text=" | " />
+                            <local:MyTextButton Text="Pysio's Home" local:CustomEventService.EventType="OpenUrl"
+                                                local:CustomEventService.EventData="https://pysio.online/" />
+                        </StackPanel>
+                    </StackPanel>
+                </local:MyCard>
                 <Grid x:Name="PanFinish" Visibility="Collapsed" Grid.Row="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
