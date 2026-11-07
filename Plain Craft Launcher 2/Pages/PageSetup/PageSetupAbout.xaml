@@ -20,7 +20,10 @@
             Grid.IsSharedSizeScope="True">
             <local:MyCard Margin="0,15" Title="{DynamicResource Setup.About.Title}">
                 <Grid Margin="21,40,21,16">
+                    <!-- 分支说明：本改版新增一行用于描述自己，并把「查看源代码 / 项目主页」
+                         指向本改版的仓库，而不是上游 PCL-Community/PCL2-CE。 -->
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="45" />
                         <RowDefinition Height="45" />
                         <RowDefinition Height="45" />
                         <RowDefinition Height="45" />
@@ -45,13 +48,20 @@
                         IsHitTestVisible="False"
                         Title="{DynamicResource Setup.About.Community.Name}" />
                     <local:MyListItem
-                        x:Name="ItemAboutPcl"
                         Grid.Row="2"
+                        Grid.Column="1"
+                        Margin="-5,0,15,0"
+                        Info="{DynamicResource Setup.About.Fork.Info}"
+                        IsHitTestVisible="False"
+                        Title="{Binding Name}" />
+                    <local:MyListItem
+                        x:Name="ItemAboutPcl"
+                        Grid.Row="3"
                         Grid.Column="1"
                         Margin="-5,0,15,0"
                         Info="{DynamicResource Setup.About.Version.Info}"
                         IsHitTestVisible="False"
-                        Title="{Binding Name}" />
+                        Title="{DynamicResource Setup.About.Version.Name}" />
                     <Image
                         x:Name="ImgPCLLogo"
                         Grid.Row="2"
@@ -91,7 +101,15 @@
                         Grid.Row="2"
                         Grid.Column="2"
                         Height="35"
-                        local:CustomEventService.EventData="https://github.com/PCL-Community/PCL2-CE"
+                        ColorType="Highlight"
+                        local:CustomEventService.EventData="https://github.com/hans9999-star/PCL-CE-Unlocked"
+                        local:CustomEventService.EventType="OpenUrl"
+                        Text="{DynamicResource Setup.About.Fork.Home}" />
+                    <local:MyButton
+                        Grid.Row="3"
+                        Grid.Column="2"
+                        Height="35"
+                        local:CustomEventService.EventData="https://github.com/hans9999-star/PCL-CE-Unlocked"
                         local:CustomEventService.EventType="OpenUrl"
                         Text="{DynamicResource Setup.About.SourceCode}" />
                 </Grid>
@@ -346,6 +364,16 @@
                     <TextBlock
                         Margin="0,12,0,4"
                         FontWeight="Bold"
+                        Text="{DynamicResource Setup.About.Legal.ForkNotice}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Margin="0,0,0,2"
+                        LineHeight="17"
+                        Text="{DynamicResource Setup.About.Legal.ForkNoticeText}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Margin="0,12,0,4"
+                        FontWeight="Bold"
                         Text="{DynamicResource Setup.About.Legal.OtherInfo}"
                         TextWrapping="Wrap" />
                     <TextBlock
@@ -361,6 +389,12 @@
                         <local:MyButton
                             Margin="0,0,20,0"
                             ColorType="Highlight"
+                            local:CustomEventService.EventData="https://github.com/hans9999-star/PCL-CE-Unlocked"
+                            local:CustomEventService.EventType="OpenUrl"
+                            Padding="13,0"
+                            Text="{DynamicResource Setup.About.Legal.ForkSource}" />
+                        <local:MyButton
+                            Margin="0,0,20,0"
                             local:CustomEventService.EventData="https://github.com/PCL-Community/PCL2-CE"
                             local:CustomEventService.EventType="OpenUrl"
                             Padding="13,0"
