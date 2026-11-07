@@ -779,8 +779,12 @@ public partial class PageLinkMain
     private bool _serverVersionsLoaded;
 
     /// <summary>当前选择的服务端类型。</summary>
-    private ServerSoftware SelectedSoftware =>
-        ComboServerType.SelectedIndex == 1 ? ServerSoftware.Paper : ServerSoftware.Vanilla;
+    private ServerSoftware SelectedSoftware => ComboServerType.SelectedIndex switch
+    {
+        1 => ServerSoftware.Paper,
+        2 => ServerSoftware.Fabric,
+        _ => ServerSoftware.Vanilla
+    };
 
     /// <summary>当前选择的服务端版本（与实例无关）。</summary>
     private string SelectedVersion =>
@@ -837,6 +841,8 @@ public partial class PageLinkMain
                 { Content = Lang.Text("Tools.GameLink.Link.ServerHostType.Vanilla") });
             ComboServerType.Items.Add(new MyComboBoxItem
                 { Content = Lang.Text("Tools.GameLink.Link.ServerHostType.Paper") });
+            ComboServerType.Items.Add(new MyComboBoxItem
+                { Content = Lang.Text("Tools.GameLink.Link.ServerHostType.Fabric") });
             ComboServerType.SelectedIndex = 0;
         }
 
