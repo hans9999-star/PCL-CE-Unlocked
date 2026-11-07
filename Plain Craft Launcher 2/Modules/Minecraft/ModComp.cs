@@ -89,7 +89,13 @@ public static class ModComp
         /// <summary>
         ///     LabyMod 客户端
         /// </summary>
-        LabyMod = 12
+        LabyMod = 12,
+
+        /// <summary>
+        ///     Paper 服务端插件（分支新增）。<br/>
+        ///     Modrinth 的 facet 由枚举名小写生成，因此这里会得到 categories:'paper'。
+        /// </summary>
+        Paper = 13
     }
 
     /// <summary>
@@ -1246,7 +1252,8 @@ public static class ModComp
                 ["forge"] = CompLoaderType.Forge,
                 ["fabric"] = CompLoaderType.Fabric,
                 ["quilt"] = CompLoaderType.Quilt,
-                ["neoforge"] = CompLoaderType.NeoForge
+                ["neoforge"] = CompLoaderType.NeoForge,
+                ["paper"] = CompLoaderType.Paper
             };
         
         private static readonly Dictionary<int, string> curseForgeCategoryLangKeys =
