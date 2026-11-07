@@ -156,11 +156,7 @@
                     </x:Array>
                 </local:MyListItem.Buttons>
             </local:MyListItem>
-            <!-- 分支说明：便携开服入口（原版只有服务器查询，没有开服） -->
-            <local:MyListItem x:Name="ItemServerHost" LogoScale="0.85" IsScaleAnimationEnabled="False" Type="RadioBox"
-                              Check="PageCheck" MinPaddingRight="35" Height="36" VerticalAlignment="Top"
-                              Title="{DynamicResource Instance.Left.ServerHost}" Tag="13"
-                              SvgIcon="lucide/play" />
+
             <local:MyListItem x:Name="ItemServer" LogoScale="0.85" IsScaleAnimationEnabled="False" Type="RadioBox"
                               Check="PageCheck"
                               MinPaddingRight="35" Height="36" VerticalAlignment="Top"
