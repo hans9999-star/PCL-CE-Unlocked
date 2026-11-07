@@ -332,7 +332,14 @@ public partial class PageDownloadCompDetail
                     };
 
                     // 获取常规资源默认下载位置逻辑
-                    if (cachedFolder.ContainsKey(file.Type) && !string.IsNullOrEmpty(cachedFolder[file.Type]))
+                    // 分支说明：服务端模式下默认目录固定指向该服务端的内容目录（mods / plugins）
+                    if (ModServerContent.ActiveTarget is { } serverTarget)
+                    {
+                        defaultFolder = serverTarget.ContentPath;
+                        Directory.CreateDirectory(defaultFolder);
+                        ModBase.Log($"[Comp] 使用服务端内容目录作为默认下载位置：{defaultFolder}");
+                    }
+                    else if (cachedFolder.ContainsKey(file.Type) && !string.IsNullOrEmpty(cachedFolder[file.Type]))
                     {
                         defaultFolder = cachedFolder.GetOrDefault(file.Type,
                             ModInstanceList.McMcInstanceSelected?.PathIndie ?? ModBase.exePath);
