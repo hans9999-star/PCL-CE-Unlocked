@@ -146,7 +146,7 @@ public partial class PageLinkMain
     {
         ModBase.RunInUi(() =>
         {
-            LabFinishPing.Text = $"{Lang.Text("Tools.GameLink.Link.Finish.Ping")}：{latency}ms";
+            LabFinishPing.Text = Lang.Text("Tools.GameLink.Link.Finish.PingUnit", latency);
         });
     }
 
@@ -160,7 +160,11 @@ public partial class PageLinkMain
     private void OnPlayersChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         ModBase.Log("接收到玩家列表改变事件");
-        ModBase.RunInUi(UpdateFinishPanel);
+        ModBase.RunInUi(() =>
+        {
+            LabFinishPlayer.Text =
+                Lang.Text("Tools.GameLink.Link.Finish.PlayerUnit", Math.Max(1, LobbyService.Players.Count));
+        });
     }
 
 
@@ -460,7 +464,7 @@ public partial class PageLinkMain
     // 创建房间：按 PCL2 原版弹窗输入端口
     private async void BtnCreate_Click(object sender, MouseButtonEventArgs e)
     {
-        BtnCreate.IsEnabled = false;
+        PanSelectCreate.IsEnabled = false;
         try
         {
             if (!ModLink.LobbyPrecheck()) return;
@@ -491,14 +495,14 @@ public partial class PageLinkMain
         }
         finally
         {
-            BtnCreate.IsEnabled = true;
+            PanSelectCreate.IsEnabled = true;
         }
     }
 
     // 加入房间：按 PCL2 原版弹窗输入邀请码
     private async void BtnJoin_Click(object sender, MouseButtonEventArgs e)
     {
-        BtnJoin.IsEnabled = false;
+        PanSelectJoin.IsEnabled = false;
         try
         {
             if (!ModLink.LobbyPrecheck()) return;
@@ -515,7 +519,7 @@ public partial class PageLinkMain
         }
         finally
         {
-            BtnJoin.IsEnabled = true;
+            PanSelectJoin.IsEnabled = true;
         }
     }
 
@@ -571,16 +575,22 @@ public partial class PageLinkMain
             var localPort = LobbyInfoProvider.McForward?.LocalEndPoint?.Port;
             var showPort = _finishIsHost ? _serverPort : localPort ?? _serverPort;
 
+            // 分支说明：与 PCL2 2.11.2 一致，信息栏只显示数值（图标已表达含义）
             LabFinishTitle.Text = Lang.Text(_finishIsHost
                 ? "Tools.GameLink.Link.Finish.Created"
                 : "Tools.GameLink.Link.Finish.Joined");
             LabFinishDesc.Text = Lang.Text(_finishIsHost
                 ? "Tools.GameLink.Link.Finish.CreatedDesc"
                 : "Tools.GameLink.Link.Finish.JoinedDesc", code);
-            LabFinishIp.Text = $"{Lang.Text("Tools.GameLink.Link.Finish.Ip")}：127.0.0.1";
-            LabFinishPort.Text = $"{Lang.Text("Tools.GameLink.Link.Finish.Port")}：{(showPort > 0 ? showPort.ToString() : "-")}";
-            LabFinishPlayer.Text = $"{Lang.Text("Tools.GameLink.Link.Finish.Player")}：{players}";
-            LabFinishPing.Text = $"{Lang.Text("Tools.GameLink.Link.Finish.Ping")}：-";
+            // 分支说明：完全按 PCL2 2.11.2 的逻辑——建房端只显示端口，加入端只显示 IP
+            BtnFinishPort.Visibility = _finishIsHost ? Visibility.Visible : Visibility.Collapsed;
+            LabFinishPort.Visibility = _finishIsHost ? Visibility.Visible : Visibility.Collapsed;
+            BtnFinishIp.Visibility = _finishIsHost ? Visibility.Collapsed : Visibility.Visible;
+            LabFinishIp.Visibility = _finishIsHost ? Visibility.Collapsed : Visibility.Visible;
+            LabFinishPort.Text = showPort > 0 ? showPort.ToString() : "-";
+            LabFinishIp.Text = localPort is null ? "-" : $"127.0.0.1:{localPort}";
+            LabFinishPlayer.Text = Lang.Text("Tools.GameLink.Link.Finish.PlayerUnit", players);
+            LabFinishPing.Text = Lang.Text("Tools.GameLink.Link.Finish.PingConnecting");
             BtnFinishCopy.Visibility = _finishIsHost ? Visibility.Visible : Visibility.Collapsed;
             BtnFinishExit.Text = Lang.Text(_finishIsHost
                 ? "Tools.GameLink.Link.Finish.Close"
