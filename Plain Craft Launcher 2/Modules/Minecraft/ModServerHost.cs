@@ -16,7 +16,10 @@ public enum ServerSoftware
     Vanilla,
 
     /// <summary>Paper（插件端，支持 Bukkit/Spigot 插件）。</summary>
-    Paper
+    Paper,
+
+    /// <summary>Fabric（模组端，服务端 jar 由 Fabric Meta 直接提供）。</summary>
+    Fabric
 }
 
 /// <summary>
@@ -28,6 +31,7 @@ public static class ModServerHost
 {
     private const string MojangManifest = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     private const string PaperProject = "https://fill.papermc.io/v3/projects/paper";
+    private const string FabricMeta = "https://meta.fabricmc.net/v2";
     private static Process? _process;
     private static readonly object _lock = new();
 
@@ -66,7 +70,12 @@ public static class ModServerHost
     /// </summary>
     public static string GetServerDir(ServerSoftware software, string version)
     {
-        var name = software == ServerSoftware.Paper ? "Paper" : "Vanilla";
+        var name = software switch
+        {
+            ServerSoftware.Paper => "Paper",
+            ServerSoftware.Fabric => "Fabric",
+            _ => "Vanilla"
+        };
         return Path.Combine(ModBase.exePath, "PCL", "Server", $"{name}-{version}");
     }
 
@@ -112,6 +121,21 @@ public static class ModServerHost
             return list;
         }
 
+        if (software == ServerSoftware.Fabric)
+        {
+            var games = await FetchJsonAsync($"{FabricMeta}/versions/game").ConfigureAwait(false);
+            if (games is not JsonArray gameArr) return list;
+            foreach (var g in gameArr)
+            {
+                // 只列正式版，避免刷屏
+                if (g?["stable"]?.GetValue<bool>() != true) continue;
+                var id = g["version"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(id)) list.Add(id);
+            }
+
+            return list;
+        }
+
         var manifest = await FetchJsonAsync(MojangManifest).ConfigureAwait(false);
         if (manifest["versions"] is not JsonArray versions) return list;
         foreach (var v in versions)
@@ -147,6 +171,40 @@ public static class ModServerHost
             if (string.IsNullOrWhiteSpace(url)) return null;
             return (new List<string> { url }, dl?["checksums"]?["sha256"]?.ToString() ?? "",
                 (long?)dl?["size"] ?? -1);
+        }
+
+        if (software == ServerSoftware.Fabric)
+        {
+            // Fabric Meta 直接提供可运行的服务端 jar：自动取最新的稳定 loader 与 installer
+            var loaders = await FetchJsonAsync($"{FabricMeta}/versions/loader/{version}").ConfigureAwait(false);
+            if (loaders is not JsonArray loaderArr || loaderArr.Count == 0) return null;
+            string? loaderVer = null;
+            foreach (var l in loaderArr)
+                if (l?["loader"]?["stable"]?.GetValue<bool>() == true)
+                {
+                    loaderVer = l["loader"]?["version"]?.ToString();
+                    break;
+                }
+
+            loaderVer ??= loaderArr[0]?["loader"]?["version"]?.ToString();
+            if (string.IsNullOrWhiteSpace(loaderVer)) return null;
+
+            var installers = await FetchJsonAsync($"{FabricMeta}/versions/installer").ConfigureAwait(false);
+            if (installers is not JsonArray instArr || instArr.Count == 0) return null;
+            string? instVer = null;
+            foreach (var i in instArr)
+                if (i?["stable"]?.GetValue<bool>() == true)
+                {
+                    instVer = i["version"]?.ToString();
+                    break;
+                }
+
+            instVer ??= instArr[0]?["version"]?.ToString();
+            if (string.IsNullOrWhiteSpace(instVer)) return null;
+
+            var fabricUrl = $"{FabricMeta}/versions/loader/{version}/{loaderVer}/{instVer}/server/jar";
+            ModBase.Log($"[ServerHost] Fabric 服务端：{version} + loader {loaderVer} + installer {instVer}");
+            return (new List<string> { fabricUrl }, "", -1);
         }
 
         // 原版：从版本清单找到该版本的 JSON，再读 downloads.server
