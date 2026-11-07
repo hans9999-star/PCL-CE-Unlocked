@@ -1454,6 +1454,9 @@ public partial class FormMain
         DownloadLabyMod = 17,
         DownloadLegacyFabric = 18,
 
+        /// <summary>服务端插件下载（分支新增）。</summary>
+        DownloadPlugin = 19,
+
         SetupLaunch = 0,
         SetupUI = 1,
         SetupGameManage = 2,
