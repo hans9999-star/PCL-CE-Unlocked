@@ -124,7 +124,125 @@
                             FontSize="15" LineHeight="19" MaxWidth="400" TextWrapping="Wrap" Foreground="{StaticResource ColorBrushGray3}" />
                     </Grid>
                 </local:MyCard>
+
+                <!-- 分支说明：本地开服入口。开服是针对当前实例的动作，
+                     并入联机页后与「分享给朋友」形成连贯流程。 -->
+                <local:MyCard x:Name="PanSelectServerHost" Grid.Column="1" Grid.Row="5" CornerRadius="13"
+                              VerticalAlignment="Center" MouseLeftButtonUp="BtnServerHost_Click">
+                    <Grid IsHitTestVisible="False">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="25" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="13" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="22" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                        </Grid.RowDefinitions>
+                        <Path Grid.Column="1" Grid.Row="1" Height="26" Width="26" Margin="0,-1,0,0"
+                              Stretch="Uniform" Fill="{DynamicResource ColorBrush3}"
+                              Data="M845 547.45h65.54A400.6 400.6 0 0 0 712.7 201.77l-33.22 56.49C781.6 318.32 845 429.13 845 547.45zM347.72 253.92L316 196.58a401.21 401.21 0 0 0-207 350.87h65.54a335.66 335.66 0 0 1 173.18-293.53zM509.79 882.68a334 334 0 0 1-181.3-53.2L293 884.57a401.13 401.13 0 0 0 419.1 8.91L679 836.93a334.94 334.94 0 0 1-169.21 45.75z M821.51 625.1A108.64 108.64 0 0 0 752.2 650l-67.31-38.86a185.44 185.44 0 0 0 11.22-63.7c0-91.55-66.38-167.9-153.54-183.42V289a109.14 109.14 0 1 0-65.57 0v75c-87.16 15.53-153.54 91.87-153.54 183.42a185.46 185.46 0 0 0 11.22 63.7L267.39 650a109.17 109.17 0 1 0 35.81 55l64.47-37.23a186 186 0 0 0 284.23 0L716.38 705a109.13 109.13 0 1 0 105.13-79.9zM198.07 777.85a43.6 43.6 0 1 1 43.61-43.61 43.66 43.66 0 0 1-43.61 43.61z m311.72-636.53a43.61 43.61 0 1 1-43.61 43.61 43.65 43.65 0 0 1 43.61-43.61z m0 526.91a120.78 120.78 0 1 1 120.78-120.78 120.91 120.91 0 0 1-120.78 120.77z m311.72 109.62a43.6 43.6 0 1 1 43.61-43.61 43.65 43.65 0 0 1-43.61 43.61z" />
+                        <TextBlock Grid.Column="3" Grid.ColumnSpan="3" Grid.Row="1"
+                                   Text="{DynamicResource Tools.GameLink.Link.ServerHostTitle}" FontSize="20"
+                                   Foreground="{DynamicResource ColorBrush3}" />
+                        <TextBlock Grid.Column="3" Grid.ColumnSpan="3" Grid.Row="2" Margin="1,10,30,10"
+                                   Text="{DynamicResource Tools.GameLink.Link.ServerHostSubtitle}"
+                                   FontSize="15" LineHeight="19" MaxWidth="400" TextWrapping="Wrap"
+                                   Foreground="{StaticResource ColorBrushGray3}" />
+                    </Grid>
+                </local:MyCard>
             </Grid>
+
+            <!-- 本地开服视图 -->
+            <Grid x:Name="PanServerHost" Visibility="Collapsed">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <local:MyCard Margin="0,0,0,10" Title="{DynamicResource Tools.GameLink.Link.ServerHostTitle}">
+                        <StackPanel Margin="12,36,12,12">
+                            <TextBlock Margin="10,0,10,10" LineHeight="21" FontSize="14" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource ColorBrushGray2}"
+                                       Text="{DynamicResource Tools.GameLink.Link.ServerHostSubtitle}" />
+                            <TextBlock x:Name="LabServerStatus" Margin="10,0,10,12" FontSize="14" TextWrapping="Wrap"
+                                       FontWeight="Bold" Foreground="{DynamicResource ColorBrush3}" Text="" />
+                            <Grid Margin="10,0,10,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="20" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="120" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
+                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostPort}" />
+                                <local:MyTextBox Grid.Row="0" Grid.Column="1" x:Name="TextServerPort" Text="25565"
+                                                 HintText="25565" />
+                                <TextBlock Grid.Row="0" Grid.Column="3" VerticalAlignment="Center" Margin="0,0,10,0"
+                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostMaxPlayers}" />
+                                <local:MyTextBox Grid.Row="0" Grid.Column="4" x:Name="TextServerMaxPlayers" Text="20"
+                                                 HintText="20" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,10,10,0"
+                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostMemory}" />
+                                <local:MyTextBox Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" x:Name="TextServerMemory"
+                                                 Text="2048" HintText="2048" />
+                                <local:MyCheckBox Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2" Margin="0,10,0,0"
+                                                  x:Name="CheckServerOnlineMode" Checked="True"
+                                                  Text="{DynamicResource Tools.GameLink.Link.ServerHostOnlineMode}" />
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="10,14,10,4">
+                                <local:MyButton x:Name="BtnServerStart" Margin="0,0,12,0" Padding="16,8"
+                                                ColorType="Highlight"
+                                                Text="{DynamicResource Tools.GameLink.Link.ServerHostStart}"
+                                                Click="BtnServerStart_Click" />
+                                <local:MyButton x:Name="BtnServerStop" Margin="0,0,12,0" Padding="16,8"
+                                                Text="{DynamicResource Tools.GameLink.Link.ServerHostStop}"
+                                                Click="BtnServerStop_Click" />
+                                <local:MyButton x:Name="BtnServerShare" Padding="16,8"
+                                                Text="{DynamicResource Tools.GameLink.Link.ServerHostShare}"
+                                                Click="BtnServerShare_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </local:MyCard>
+
+                    <local:MyCard Grid.Row="1" Title="{DynamicResource Tools.GameLink.Link.ServerHostConsole}">
+                        <Grid Margin="12,36,12,12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="260" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Border Background="{DynamicResource ColorBrushGray7}" CornerRadius="6">
+                                <TextBox x:Name="TextServerConsole" IsReadOnly="True" AcceptsReturn="True"
+                                         TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                         Background="Transparent" BorderThickness="0" Padding="8"
+                                         FontFamily="Consolas, Microsoft YaHei UI" FontSize="12"
+                                         Foreground="{DynamicResource ColorBrushGray1}" />
+                            </Border>
+                            <DockPanel Grid.Row="1" Margin="0,10,0,0">
+                                <local:MyButton x:Name="BtnServerSend" DockPanel.Dock="Right" Margin="10,0,0,0"
+                                                Padding="16,8" ColorType="Highlight"
+                                                Text="{DynamicResource Tools.GameLink.Link.ServerHostSend}"
+                                                Click="BtnServerSend_Click" />
+                                <local:MyTextBox x:Name="TextServerCommand"
+                                                 HintText="{DynamicResource Tools.GameLink.Link.ServerHostCommandHint}"
+                                                 MaxLines="1" AcceptsReturn="False"
+                                                 KeyDown="TextServerCommand_KeyDown" />
+                            </DockPanel>
+                        </Grid>
+                    </local:MyCard>
+                </Grid>
+            </Grid>
+
             <Grid x:Name="PanFinish" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="300">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
