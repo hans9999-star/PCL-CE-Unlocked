@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using PCL.Core.App;
@@ -26,7 +26,7 @@ public partial class PageSetupUpdate
         ComboSystemUpdateChannel.SelectedIndex = (int)Config.Update.UpdateChannel;
         ComboSystemUpdateMode.SelectedIndex = (int)Config.Update.UpdateMode;
 
-        TextCurrentVersion.Text = "PCL CE " + VersionNameFormat(ModBase.versionBaseName);
+        TextCurrentVersion.Text = Basics.Metadata.Name + " " + VersionNameFormat(ModBase.versionBaseName);
         ModAnimation.AniEndControl();
         CheckUpdate();
     }
@@ -79,9 +79,12 @@ public partial class PageSetupUpdate
                         UpdateManager.IsCurrentVersionBeta
                             ? UpdateChannel.beta
                             : UpdateChannel.stable, SystemInfo.IsArm64System ? UpdateArch.arm64 : UpdateArch.x64);
-                    TextUpdateName.Text = "PCL CE " + VersionNameFormat(updateInfo.VersionName);
-                    var summary = updateInfo.Changelog.Between("<summary>", "</summary>");
-                    if (!updateInfo.Changelog.Contains("<summary>") || string.IsNullOrWhiteSpace(summary.Trim()))
+                    TextUpdateName.Text = Basics.Metadata.Name + " " + VersionNameFormat(updateInfo.VersionName);
+                    // 分支说明：GitHub Releases 的 body 可能为空（无发布说明），
+                    // 原代码直接对 Changelog 调用扩展方法会抛 NullReferenceException。
+                    var changelog = updateInfo.Changelog ?? "";
+                    var summary = changelog.Between("<summary>", "</summary>");
+                    if (!changelog.Contains("<summary>") || string.IsNullOrWhiteSpace(summary.Trim()))
                         TextChangelog.Text = Lang.Text("Setup.Update.Changelog.Empty");
                     else
                         TextChangelog.Text = summary;
@@ -111,8 +114,10 @@ public partial class PageSetupUpdate
 
                 if (UpdateManager.updateLoader is not null && UpdateManager.updateLoader.State == ModBase.LoadState.Loading)
                 {
-                    BtnUpdate_Timer();
+                    // 分支说明：不等待进度刷新循环，让更新卡片立即显示；
+                    // 进度在后台异步刷新（原实现会一直卡到这里下载结束）。
                     BtnUpdate.IsEnabled = false;
+                    _ = BtnUpdate_TimerAsync();
                 }
                 else if (UpdateManager.isUpdateWaitingRestart)
                 {
@@ -148,12 +153,18 @@ public partial class PageSetupUpdate
         }
     }
 
-    public void BtnUpdate_Timer()
+    /// <summary>
+    ///     下载进行中时刷新按钮进度。<br/>
+    ///     分支说明：原实现是 while + Thread.Sleep 的同步死循环，会在 UI 线程上
+    ///     一直阻塞到下载结束（我们的更新包约 187 MB，可能要十几分钟），
+    ///     表现为打开更新页后整个启动器假死/崩溃。改为 await Task.Delay 让出 UI 线程。
+    /// </summary>
+    private async Task BtnUpdate_TimerAsync()
     {
         while (UpdateManager.updateLoader is not null && UpdateManager.updateLoader.State == ModBase.LoadState.Loading)
         {
-            ModBase.RunInUi(() => BtnUpdate.Text = Lang.Number(UpdateManager.updateLoader.Progress, "P2"));
-            Thread.Sleep(200);
+            BtnUpdate.Text = Lang.Number(UpdateManager.updateLoader.Progress, "P2");
+            await Task.Delay(200);
         }
     }
 
