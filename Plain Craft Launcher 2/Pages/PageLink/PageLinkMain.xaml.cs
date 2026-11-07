@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Input;
@@ -57,6 +58,9 @@ public partial class PageLinkMain
         LobbyService.OnServerShutDown += OnServerShuttedDownHandler;
         LobbyService.OnServerStarted += OnServerStartedHandler;
         LobbyService.OnServerException += OnServerExceptionHandler;
+        // 本地开服：把服务端输出接到本页控制台
+        ModServerHost.OutputReceived += AppendServerOutput;
+        ModServerHost.Exited += () => ModBase.RunInUi(RefreshServerHostStatus);
 
         if (lobbyAnnouncementLoader is null)
         {
@@ -733,7 +737,8 @@ public partial class PageLinkMain
     public enum Subpages
     {
         PanSelect,
-        PanFinish
+        PanFinish,
+        PanServerHost
     }
 
     public Subpages CurrentSubpage
@@ -755,7 +760,174 @@ public partial class PageLinkMain
             CurrentSubpage == Subpages.PanSelect ? Visibility.Visible : Visibility.Collapsed;
         ModMain.frmLinkMain.PanFinish.Visibility =
             CurrentSubpage == Subpages.PanFinish ? Visibility.Visible : Visibility.Collapsed;
+        ModMain.frmLinkMain.PanServerHost.Visibility =
+            CurrentSubpage == Subpages.PanServerHost ? Visibility.Visible : Visibility.Collapsed;
+        if (CurrentSubpage == Subpages.PanServerHost) RefreshServerHostStatus();
     }
+
+    #region 本地开服
+
+    /// <summary>当前实例的开服端口（分享给朋友时要用）。</summary>
+    private int _serverHostPort = 25565;
+
+    private void BtnServerHost_Click(object sender, MouseButtonEventArgs e)
+    {
+        CurrentSubpage = Subpages.PanServerHost;
+    }
+
+    private void AppendServerOutput(string text)
+    {
+        ModBase.RunInUi(() =>
+        {
+            TextServerConsole.AppendText(text);
+            TextServerConsole.ScrollToEnd();
+        });
+    }
+
+    private void RefreshServerHostStatus()
+    {
+        var inst = PageInstanceLeft.McInstance;
+        if (inst is null)
+        {
+            LabServerStatus.Text = Lang.Text("Instance.ServerHost.Status.NoInstance");
+            BtnServerStart.IsEnabled = false;
+            BtnServerStop.IsEnabled = false;
+            BtnServerShare.IsEnabled = false;
+            return;
+        }
+
+        var running = ModServerHost.IsRunning;
+        var jarExists = File.Exists(ModServerHost.GetJarPath(inst.PathInstance));
+        LabServerStatus.Text = (running
+            ? Lang.Text("Instance.ServerHost.Status.Running")
+            : jarExists
+                ? Lang.Text("Instance.ServerHost.Status.Ready")
+                : Lang.Text("Instance.ServerHost.Status.NoJar"))
+            + "  ·  " + inst.Name;
+        BtnServerStart.IsEnabled = !running;
+        BtnServerStop.IsEnabled = running;
+        BtnServerShare.IsEnabled = running;
+    }
+
+    private async void BtnServerStart_Click(object sender, MouseButtonEventArgs e)
+    {
+        var inst = PageInstanceLeft.McInstance;
+        if (inst is null) return;
+
+        var dir = inst.PathInstance;
+        var jarPath = ModServerHost.GetJarPath(dir);
+
+        if (!File.Exists(jarPath))
+        {
+            var url = ModServerHost.GetServerJarUrl(dir, out var sha1, out var size);
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                HintService.Hint(Lang.Text("Instance.ServerHost.Error.NoServerDownload", inst.Name), HintType.Error);
+                return;
+            }
+
+            BtnServerStart.IsEnabled = false;
+            LabServerStatus.Text = Lang.Text("Instance.ServerHost.Status.Downloading");
+            ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.DownloadingStart", inst.Name));
+            if (!await ModServerHost.DownloadJarAsync(url, jarPath, size, sha1).ConfigureAwait(true))
+            {
+                HintService.Hint(Lang.Text("Instance.ServerHost.Error.DownloadFailed"), HintType.Error);
+                RefreshServerHostStatus();
+                return;
+            }
+
+            ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Downloaded"));
+        }
+
+        var port = int.TryParse(TextServerPort.Text?.Trim(), out var p) && p is > 0 and < 65536 ? p : 25565;
+        var maxPlayers = int.TryParse(TextServerMaxPlayers.Text?.Trim(), out var m) && m > 0 ? m : 20;
+        var memory = int.TryParse(TextServerMemory.Text?.Trim(), out var mem) && mem >= 512 ? mem : 2048;
+        var onlineMode = CheckServerOnlineMode.Checked != false;
+        _serverHostPort = port;
+
+        try
+        {
+            ModServerHost.PrepareFiles(dir, port, onlineMode, maxPlayers, "PCL CE Unlocked Server");
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerHost] 准备服务端文件失败", ModBase.LogLevel.Hint);
+            HintService.Hint(Lang.Text("Instance.ServerHost.Error.PrepareFailed"), HintType.Error);
+            RefreshServerHostStatus();
+            return;
+        }
+
+        ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Starting",
+            ModServerHost.GetJavaPath(), memory, port));
+        if (!ModServerHost.Start(dir, jarPath, memory))
+            HintService.Hint(Lang.Text("Instance.ServerHost.Error.StartFailed"), HintType.Error);
+
+        RefreshServerHostStatus();
+    }
+
+    private async void BtnServerStop_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (!ModServerHost.IsRunning) return;
+        BtnServerStop.IsEnabled = false;
+        ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Stopping"));
+        await ModServerHost.StopAsync().ConfigureAwait(true);
+        RefreshServerHostStatus();
+    }
+
+    /// <summary>把本地服务端发布到联机大厅，朋友输邀请码即可进服。</summary>
+    private async void BtnServerShare_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (!ModServerHost.IsRunning)
+        {
+            HintService.Hint(Lang.Text("Instance.ServerHost.Error.NotRunning"));
+            return;
+        }
+
+        if (!ModLink.LobbyPrecheck()) return;
+
+        var username = LobbyInfoProvider.GetUsername();
+        _finishIsHost = true;
+        _serverPort = _serverHostPort;
+        CurrentSubpage = Subpages.PanFinish;
+        ModBase.RunInUi(() => BtnFinishCopy.Visibility = Visibility.Collapsed);
+
+        var res = await LobbyService.CreateLobbyAsync(_serverHostPort, username).ConfigureAwait(true);
+        if (!res)
+        {
+            CurrentSubpage = Subpages.PanServerHost;
+            return;
+        }
+
+        UpdateFinishPanel();
+    }
+
+    private void BtnServerSend_Click(object sender, MouseButtonEventArgs e)
+    {
+        SendServerCommand();
+    }
+
+    private void TextServerCommand_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        SendServerCommand();
+        e.Handled = true;
+    }
+
+    private void SendServerCommand()
+    {
+        var command = TextServerCommand.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(command)) return;
+        if (!ModServerHost.IsRunning)
+        {
+            HintService.Hint(Lang.Text("Instance.ServerHost.Error.NotRunning"));
+            return;
+        }
+
+        ModServerHost.SendCommand(command);
+        TextServerCommand.Text = string.Empty;
+    }
+
+    #endregion
 
     #endregion
 }
