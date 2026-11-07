@@ -3375,6 +3375,7 @@
     <sys:String x:Key="Tools.GameLink.Link.ServerHostVersion">版本</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Vanilla">原版</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Paper">Paper（插件端）</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Fabric">Fabric（模組端）</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostLoadingVersions">正在取得版本清單……</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostNoVersions">取得版本清單失敗，請檢查網路</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostPort">埠</sys:String>
