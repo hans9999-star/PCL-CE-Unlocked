@@ -157,12 +157,7 @@ public partial class PageInstanceLeft : IRefreshable
                 ItemExport.Checked = true;
                 break;
             }
-            case FormMain.PageSubType.VersionServerHost:
-            {
-                ItemServerHost.Checked = true;
-                ModMain.frmInstanceServerHost?.Reload();
-                break;
-            }
+
             case FormMain.PageSubType.VersionServer:
             {
                 if (ModMain.frmInstanceServer is not null)
@@ -282,13 +277,7 @@ public partial class PageInstanceLeft : IRefreshable
                     ModMain.frmInstanceExport = new PageInstanceExport();
                 return ModMain.frmInstanceExport;
             }
-            case FormMain.PageSubType.VersionServerHost:
-            {
-                if (ModMain.frmInstanceServerHost is null)
-                    ModMain.frmInstanceServerHost = new PageInstanceServerHost();
-                ModMain.frmInstanceServerHost.Reload();
-                return ModMain.frmInstanceServerHost;
-            }
+
             case FormMain.PageSubType.VersionServer:
             {
                 if (ModMain.frmInstanceServer is null)
