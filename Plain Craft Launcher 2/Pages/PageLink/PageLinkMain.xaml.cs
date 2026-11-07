@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Collections.Specialized;
 using System.Windows;
@@ -739,7 +740,8 @@ public partial class PageLinkMain
     {
         PanSelect,
         PanFinish,
-        PanServerHost
+        PanServerHost,
+        PanServerFiles
     }
 
     public Subpages CurrentSubpage
@@ -763,11 +765,15 @@ public partial class PageLinkMain
             CurrentSubpage == Subpages.PanFinish ? Visibility.Visible : Visibility.Collapsed;
         ModMain.frmLinkMain.PanServerHost.Visibility =
             CurrentSubpage == Subpages.PanServerHost ? Visibility.Visible : Visibility.Collapsed;
+        ModMain.frmLinkMain.PanServerFiles.Visibility =
+            CurrentSubpage == Subpages.PanServerFiles ? Visibility.Visible : Visibility.Collapsed;
         if (CurrentSubpage == Subpages.PanServerHost)
         {
             RefreshServerHostStatus();
             _ = EnsureServerVersionsAsync();
         }
+
+        if (CurrentSubpage == Subpages.PanServerFiles) RefreshFilesLocal();
     }
 
     #region 本地开服
@@ -1096,6 +1102,263 @@ public partial class PageLinkMain
 
         ModServerHost.SendCommand(command);
         TextServerCommand.Text = string.Empty;
+    }
+
+    #endregion
+    #region 内容管理（mod / 插件）
+
+    /// <summary>当前选择的服务端对应的 Minecraft 版本（Forge 要拆出 MC 段，NeoForge 要反推）。</summary>
+    private string SelectedGameVersion
+    {
+        get
+        {
+            var v = SelectedVersion;
+            var software = SelectedSoftware;
+            if (software == ServerSoftware.Forge)
+            {
+                var parts = v.Split('|');
+                return parts.Length == 2 ? parts[0] : v;
+            }
+
+            if (software == ServerSoftware.NeoForge)
+            {
+                var p = v.Split('.');
+                if (p.Length >= 2 && int.TryParse(p[0], out var major) && int.TryParse(p[1], out var minor))
+                    return major >= 26 ? $"{major}.{minor}" : $"1.{major}.{minor}";
+            }
+
+            return v;
+        }
+    }
+
+    private ContentKind CurrentContentKind => ModServerContent.KindOf(SelectedSoftware);
+
+    private void BtnServerFiles_Click(object sender, MouseButtonEventArgs e)
+    {
+        CurrentSubpage = Subpages.PanServerFiles;
+    }
+
+    private void BtnFilesBack_Click(object sender, MouseButtonEventArgs e)
+    {
+        CurrentSubpage = Subpages.PanServerHost;
+    }
+
+    private void BtnFilesOpen_Click(object sender, MouseButtonEventArgs e)
+    {
+        var version = SelectedVersion;
+        if (string.IsNullOrWhiteSpace(version)) return;
+        var dir = ModServerContent.GetContentDir(SelectedSoftware, version, CurrentContentKind);
+        try
+        {
+            Directory.CreateDirectory(dir);
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerContent] 打开文件夹失败", ModBase.LogLevel.Hint);
+        }
+    }
+
+    private void BtnFilesModeLocal_Click(object sender, MouseButtonEventArgs e)
+    {
+        CardFilesLocal.Visibility = Visibility.Visible;
+        CardFilesOnline.Visibility = Visibility.Collapsed;
+        BtnFilesModeLocal.ColorType = MyButton.ColorState.Highlight;
+        BtnFilesModeOnline.ColorType = MyButton.ColorState.Normal;
+        RefreshFilesLocal();
+    }
+
+    private void BtnFilesModeOnline_Click(object sender, MouseButtonEventArgs e)
+    {
+        CardFilesLocal.Visibility = Visibility.Collapsed;
+        CardFilesOnline.Visibility = Visibility.Visible;
+        BtnFilesModeLocal.ColorType = MyButton.ColorState.Normal;
+        BtnFilesModeOnline.ColorType = MyButton.ColorState.Highlight;
+    }
+
+    /// <summary>刷新「已安装」列表。</summary>
+    private void RefreshFilesLocal()
+    {
+        PanLocalList.Children.Clear();
+        var version = SelectedVersion;
+        if (string.IsNullOrWhiteSpace(version)) return;
+
+        var software = SelectedSoftware;
+        var kind = ModServerContent.KindOf(software);
+        var dir = ModServerContent.GetContentDir(software, version, kind);
+        var isPlugin = kind == ContentKind.Plugin;
+        LabFilesTitle.Text = (isPlugin
+            ? Lang.Text("Tools.GameLink.Link.ServerHostPluginManage")
+            : Lang.Text("Tools.GameLink.Link.ServerHostModManage"))
+            + "  ·  " + FormatVersionItem(software, version);
+
+        var files = ModServerContent.ListLocal(dir);
+        if (files.Count == 0)
+        {
+            PanLocalList.Children.Add(new TextBlock
+            {
+                Margin = new Thickness(6, 8, 6, 8),
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = (System.Windows.Media.Brush)FindResource("ColorBrushGray2"),
+                Text = Lang.Text("Tools.GameLink.Link.ServerHostNoContent")
+            });
+            return;
+        }
+
+        foreach (var file in files)
+        {
+            var row = new Grid { Margin = new Thickness(4, 3, 4, 3) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var label = new TextBlock
+            {
+                Text = $"{file.Name}   ({file.Size / 1024} KB)",
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Opacity = file.Enabled ? 1d : 0.45d,
+                Foreground = (System.Windows.Media.Brush)FindResource("ColorBrushGray1")
+            };
+            Grid.SetColumn(label, 0);
+
+            var captured = file;
+            var toggle = new MyButton
+            {
+                Text = file.Enabled
+                    ? Lang.Text("Tools.GameLink.Link.ServerHostDisable")
+                    : Lang.Text("Tools.GameLink.Link.ServerHostEnable"),
+                Padding = new Thickness(12, 5, 12, 5),
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            toggle.Click += (_, _) =>
+            {
+                ModServerContent.SetEnabled(captured, !captured.Enabled);
+                RefreshFilesLocal();
+            };
+            Grid.SetColumn(toggle, 1);
+
+            var del = new MyButton
+            {
+                Text = Lang.Text("Tools.GameLink.Link.ServerHostDelete"),
+                ColorType = MyButton.ColorState.Red,
+                Padding = new Thickness(12, 5, 12, 5),
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            del.Click += (_, _) =>
+            {
+                ModServerContent.Delete(captured);
+                RefreshFilesLocal();
+            };
+            Grid.SetColumn(del, 2);
+
+            row.Children.Add(label);
+            row.Children.Add(toggle);
+            row.Children.Add(del);
+            PanLocalList.Children.Add(row);
+        }
+    }
+
+    private void BtnOnlineSearch_Click(object sender, MouseButtonEventArgs e) => RunOnlineSearch();
+
+    private void TextOnlineQuery_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        RunOnlineSearch();
+        e.Handled = true;
+    }
+
+    private async void RunOnlineSearch()
+    {
+        var query = TextOnlineQuery.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(query)) return;
+        var version = SelectedVersion;
+        if (string.IsNullOrWhiteSpace(version)) return;
+
+        var software = SelectedSoftware;
+        PanOnlineList.Children.Clear();
+        PanOnlineList.Children.Add(new TextBlock
+        {
+            Margin = new Thickness(6, 8, 6, 8),
+            Foreground = (System.Windows.Media.Brush)FindResource("ColorBrushGray2"),
+            Text = Lang.Text("Tools.GameLink.Link.ServerHostSearching")
+        });
+
+        var kind = ModServerContent.KindOf(software);
+        var hits = await ModServerContent
+            .SearchAsync(query, kind, ModServerContent.LoaderOf(software), SelectedGameVersion)
+            .ConfigureAwait(true);
+
+        PanOnlineList.Children.Clear();
+        if (hits.Count == 0)
+        {
+            PanOnlineList.Children.Add(new TextBlock
+            {
+                Margin = new Thickness(6, 8, 6, 8),
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = (System.Windows.Media.Brush)FindResource("ColorBrushGray2"),
+                Text = Lang.Text("Tools.GameLink.Link.ServerHostNoResult")
+            });
+            return;
+        }
+
+        foreach (var hit in hits)
+        {
+            var row = new Grid { Margin = new Thickness(4, 4, 4, 4) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            stack.Children.Add(new TextBlock
+            {
+                Text = hit.Title,
+                FontWeight = FontWeights.Bold,
+                Foreground = (System.Windows.Media.Brush)FindResource("ColorBrushGray1")
+            });
+            stack.Children.Add(new TextBlock
+            {
+                Text = hit.Description,
+                FontSize = 12,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Foreground = (System.Windows.Media.Brush)FindResource("ColorBrushGray2")
+            });
+            Grid.SetColumn(stack, 0);
+
+            var captured = hit;
+            var download = new MyButton
+            {
+                Text = Lang.Text("Tools.GameLink.Link.ServerHostDownload"),
+                ColorType = MyButton.ColorState.Highlight,
+                Padding = new Thickness(12, 5, 12, 5),
+                Margin = new Thickness(10, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            download.Click += async (_, _) =>
+            {
+                download.IsEnabled = false;
+                download.Text = Lang.Text("Tools.GameLink.Link.ServerHostDownloading");
+                var dir = ModServerContent.GetContentDir(SelectedSoftware, SelectedVersion,
+                    ModServerContent.KindOf(SelectedSoftware));
+                var file = await ModServerContent
+                    .InstallAsync(captured.Slug, ModServerContent.LoaderOf(SelectedSoftware),
+                        SelectedGameVersion, dir).ConfigureAwait(true);
+                if (file is null)
+                {
+                    HintService.Hint(Lang.Text("Tools.GameLink.Link.ServerHostDownloadFailed"), HintType.Error);
+                    download.Text = Lang.Text("Tools.GameLink.Link.ServerHostDownload");
+                    download.IsEnabled = true;
+                    return;
+                }
+
+                HintService.Hint(Lang.Text("Tools.GameLink.Link.ServerHostDownloaded", file));
+                download.Text = Lang.Text("Tools.GameLink.Link.ServerHostDownloadedShort");
+            };
+            Grid.SetColumn(download, 1);
+
+            row.Children.Add(stack);
+            row.Children.Add(download);
+            PanOnlineList.Children.Add(row);
+        }
     }
 
     #endregion
