@@ -186,48 +186,47 @@
                                                     Click="BtnServerShare_Click" />
                                 </StackPanel>
                             </Grid>
-                            <!-- 分支说明：服务端类型与版本独立于当前实例选择。 -->
-                            <Grid Margin="10,0,10,8">
+                            <!-- 分支说明：服务端类型与版本独立于当前实例选择。
+                                 下面三行共用同一套列宽，标签左对齐；下拉框给足宽度，
+                                 避免「Paper（插件端）」「Fabric（模组端）」这类文本被裁。 -->
+                            <Grid Margin="10,0,10,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="170" />
-                                    <ColumnDefinition Width="20" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="170" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
-                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostType}" />
-                                <local:MyComboBox Grid.Column="1" x:Name="ComboServerType"
-                                                  SelectionChanged="ComboServerType_SelectionChanged" />
-                                <TextBlock Grid.Column="3" VerticalAlignment="Center" Margin="0,0,10,0"
-                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostVersion}" />
-                                <local:MyComboBox Grid.Column="4" x:Name="ComboServerVersion" />
-                            </Grid>
-                            <Grid Margin="10,2,10,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="120" />
-                                    <ColumnDefinition Width="20" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" MinWidth="78" />
+                                    <ColumnDefinition Width="200" />
+                                    <ColumnDefinition Width="24" />
+                                    <ColumnDefinition Width="Auto" MinWidth="78" />
+                                    <ColumnDefinition Width="140" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
+
                                 <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
-                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostPort}" />
-                                <local:MyTextBox Grid.Row="0" Grid.Column="1" x:Name="TextServerPort" Text="25565"
-                                                 HintText="25565" />
+                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostType}" />
+                                <local:MyComboBox Grid.Row="0" Grid.Column="1" x:Name="ComboServerType" Width="200"
+                                                  Height="30" VerticalAlignment="Center"
+                                                  SelectionChanged="ComboServerType_SelectionChanged" />
                                 <TextBlock Grid.Row="0" Grid.Column="3" VerticalAlignment="Center" Margin="0,0,10,0"
+                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostVersion}" />
+                                <local:MyComboBox Grid.Row="0" Grid.Column="4" x:Name="ComboServerVersion" Width="140"
+                                                  Height="30" VerticalAlignment="Center" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,8,10,0"
+                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostPort}" />
+                                <local:MyTextBox Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" x:Name="TextServerPort"
+                                                 Text="25565" HintText="25565" />
+                                <TextBlock Grid.Row="1" Grid.Column="3" VerticalAlignment="Center" Margin="0,8,10,0"
                                            Text="{DynamicResource Tools.GameLink.Link.ServerHostMaxPlayers}" />
-                                <local:MyTextBox Grid.Row="0" Grid.Column="4" x:Name="TextServerMaxPlayers" Text="20"
-                                                 HintText="20" />
-                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,10,10,0"
+                                <local:MyTextBox Grid.Row="1" Grid.Column="4" Margin="0,8,0,0" x:Name="TextServerMaxPlayers"
+                                                 Text="20" HintText="20" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,8,10,0"
                                            Text="{DynamicResource Tools.GameLink.Link.ServerHostMemory}" />
-                                <local:MyTextBox Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" x:Name="TextServerMemory"
+                                <local:MyTextBox Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" x:Name="TextServerMemory"
                                                  Text="2048" HintText="2048" />
-                                <local:MyCheckBox Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2" Margin="0,10,0,0"
+                                <local:MyCheckBox Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="2" Margin="0,8,0,0"
                                                   x:Name="CheckServerOnlineMode" Checked="True"
                                                   Text="{DynamicResource Tools.GameLink.Link.ServerHostOnlineMode}" />
                             </Grid>
