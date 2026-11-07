@@ -672,7 +672,7 @@ public partial class PageLinkMain
     #region PanFinish | 加载完成页面
 
     // 退出
-    private async void BtnFinishExit_Click(object sender, ModBase.RouteEventArgs routeEventArgs)
+    private async void BtnFinishExit_Click(object sender, MouseButtonEventArgs e)
     {
         if (ModMain.MyMsgBox(
                 Lang.Text(LobbyService.IsHost
@@ -690,7 +690,7 @@ public partial class PageLinkMain
     }
 
     // 复制邀请码
-    private void BtnFinishCopy_Click(object sender, ModBase.RouteEventArgs routeEventArgs)
+    private void BtnFinishCopy_Click(object sender, MouseButtonEventArgs e)
     {
         var code = LobbyService.CurrentLobbyCode ?? _lastCode ?? "";
         if (string.IsNullOrWhiteSpace(code))
