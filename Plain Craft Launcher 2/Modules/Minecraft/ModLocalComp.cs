@@ -58,6 +58,8 @@ public static class ModLocalComp
             switch (compType)
             {
                 case CompType.Mod:
+                // 分支说明：Paper 插件同样是 jar，复用 Mod 的判定
+                case CompType.Plugin:
                 {
                     return IsModFile(path);
                 }
@@ -2319,6 +2321,16 @@ public static class ModLocalComp
         public PageInstanceCompResource frm;
         public McInstance gameVersion;
         public List<CompLoaderType> loaders;
+
+        // ---------- 分支新增：服务端模式（无 McInstance 目标）的覆盖字段 ----------
+        /// <summary>
+        ///     Jar-in-Jar 缓存所用的目录；为空时退回 <c>gameVersion.PathInstance</c>。
+        ///     服务端模式不设置它，从而跳过依赖实例的内嵌解析缓存。
+        /// </summary>
+        public string? overrideInstancePath;
+
+        /// <summary>原版版本号覆盖；为空时退回 <c>gameVersion.Info.VanillaName</c>。</summary>
+        public string? overrideVanillaName;
     }
 
     // 加载资源列表
@@ -2344,6 +2356,12 @@ public static class ModLocalComp
         if (instance.Info.HasQuilt) return "Quilt";
         return null;
     }
+
+    /// <summary>
+    ///     取目标的原版版本号：优先用服务端模式的覆盖值，否则退回实例信息。
+    /// </summary>
+    internal static string GetTargetVanillaName(CompLocalLoaderData data) =>
+        data.overrideVanillaName ?? data.gameVersion?.Info?.VanillaName ?? string.Empty;
 
     // 每次启动 Mod 列表解析递增。后台任务只有仍属于最新一轮时才可发布完成状态，
     // 避免旧实例/旧重载的 finally 把新一轮尚未完成的状态覆盖成 true。
@@ -2530,8 +2548,10 @@ public static class ModLocalComp
             // 加载 Mod 列表 - 优化：对于原理图文件，延迟加载NBT数据
             var modUpdateList = new List<LocalCompFile>();
             // 仅 Mod 类型启用 Jar-in-Jar 缓存；资源包/光影/投影共用同一 loader，不能用其路径污染/剪裁 mod 缓存
-            var jijEnabled = loader.input.compType == CompType.Mod;
-            var jijInstancePath = jijEnabled ? loader.input.gameVersion.PathInstance : null;
+            // 服务端模式下没有实例，overrideInstancePath 为空即跳过 Jar-in-Jar
+            var jijSourcePath = loader.input.overrideInstancePath ?? loader.input.gameVersion?.PathInstance;
+            var jijEnabled = loader.input.compType == CompType.Mod && jijSourcePath is not null;
+            var jijInstancePath = jijEnabled ? jijSourcePath : null;
             var preferredLoader = jijEnabled ? GetPreferredLoader(loader.input.gameVersion) : null;
             var jijGeneration = 0;
             Action? startJijResolve = null;
@@ -2563,7 +2583,7 @@ public static class ModLocalComp
                 // 读取 Comp 缓存
                 if (ModEntry.State == LocalCompFile.LocalFileStatus.Unavailable)
                     continue;
-                var cacheKey = ModEntry.ModrinthHash + loader.input.gameVersion.Info.VanillaName +
+                var cacheKey = ModEntry.ModrinthHash + GetTargetVanillaName(loader.input) +
                                loader.input.loaders.Join("");
                 if (cache.ContainsKey(cacheKey))
                 {
@@ -2655,7 +2675,7 @@ public static class ModLocalComp
         // 获取作为检查目标的加载器和版本
         var modLoaders = loader.input.loaders;
         var compType = loader.input.compType;
-        var mcInstance = loader.input.gameVersion.Info.VanillaName;
+        var mcInstance = GetTargetVanillaName(loader.input);
 
         // 开始网络获取
         ModBase.Log($"[Mod] 目标加载器：{string.Join("/", modLoaders)}，版本：{mcInstance}");
@@ -3006,6 +3026,10 @@ public static class ModLocalComp
             case CompType.Mod:
             {
                 return "mods";
+            }
+            case CompType.Plugin:
+            {
+                return "plugins";
             }
             case CompType.ResourcePack:
             {
