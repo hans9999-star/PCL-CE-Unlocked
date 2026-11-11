@@ -138,6 +138,8 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
 
             var card = new Border
             {
+                // 留出边距给投影，否则阴影会被窗口边界裁掉
+                Margin = new Thickness(14),
                 CornerRadius = new CornerRadius(7),
                 Background = (Brush)res["ColorBrushBackground"],
                 Effect = new DropShadowEffect
@@ -154,11 +156,13 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
             var window = new Window
             {
                 Title = Lang.Text("Crash.Ai.Title"),
-                Width = 420,
+                Width = 448,
                 SizeToContent = SizeToContent.Height,
                 WindowStyle = WindowStyle.None,
                 AllowsTransparency = true,
-                Background = null,
+                // 必须用 Transparent 而不是 null：AllowsTransparency 下 null 会让 WPF
+                // 退回默认窗口背景（灰色），圆角之外就露出灰色直角。
+                Background = Brushes.Transparent,
                 ResizeMode = ResizeMode.NoResize,
                 ShowInTaskbar = false,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
