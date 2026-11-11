@@ -115,7 +115,7 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
             {
                 Foreground = (SolidColorBrush)res["ColorBrush3"],
                 Margin = new Thickness(0, 8, 0, 0),
-                MinHeight = 120
+                MinHeight = 80
             };
             loading.LabText.Text = Lang.Text("Crash.Ai.Analyzing");
             var cancelButton = new MyButton
@@ -127,9 +127,12 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
             };
             cancelButton.Click += (_, _) => cts.Cancel();
 
+            // 透明背景：否则 StackPanel 的空白处不接收鼠标事件，拖动只能点在文字上
+            var head = new StackPanel { Background = Brushes.Transparent };
+            head.Children.Add(title);
+            head.Children.Add(line);
             var stack = new StackPanel { Margin = new Thickness(22, 22, 22, 20) };
-            stack.Children.Add(title);
-            stack.Children.Add(line);
+            stack.Children.Add(head);
             stack.Children.Add(loading);
             stack.Children.Add(cancelButton);
 
@@ -162,8 +165,9 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
                 Owner = ModMain.frmMain,
                 Content = card
             };
-            // 无边框窗口要自己支持拖动
-            card.MouseLeftButtonDown += (_, _) =>
+            // 无边框窗口要自己支持拖动。只绑标题区：DragMove() 会阻塞到鼠标释放，
+            // 若绑在整张卡片上，鼠标在按钮上按下会被拖动逻辑吞掉，按钮点不动。
+            head.MouseLeftButtonDown += (_, _) =>
             {
                 try
                 {
