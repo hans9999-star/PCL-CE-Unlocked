@@ -27,6 +27,11 @@ public partial class PageInstanceLeft : IRefreshable
     {
         var hide = Config.Preference.Hide;
 
+        // 分支说明：处于服务端内容管理时，这些客户端专用条目无论用户怎么配置
+        // 「隐藏功能」，都必须隐藏 —— 否则本方法会覆盖掉 RefreshPluginEntryVisibility
+        // 设置的结果（这正是「只隐藏了概览和设置」的原因）。
+        var serverMode = ModServerContent.ActiveTarget is not null;
+
         if (McInstance is not null && McInstance.Modable)
         {
             ItemMod.Visibility = !PageSetupUI.HiddenForceShow && hide.InstanceMod
@@ -70,30 +75,49 @@ public partial class PageInstanceLeft : IRefreshable
             TextResource.Visibility = Visibility.Visible;
         }
 
-        ItemInstall.Visibility = !PageSetupUI.HiddenForceShow && hide.InstanceEdit
+        ItemInstall.Visibility = serverMode
             ? Visibility.Collapsed
-            : Visibility.Visible;
-        ItemExport.Visibility = !PageSetupUI.HiddenForceShow && hide.InstanceExport
+            : !PageSetupUI.HiddenForceShow && hide.InstanceEdit
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        ItemExport.Visibility = serverMode
             ? Visibility.Collapsed
-            : Visibility.Visible;
-        ItemWorld.Visibility = !PageSetupUI.HiddenForceShow && hide.InstanceSave
+            : !PageSetupUI.HiddenForceShow && hide.InstanceExport
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        ItemWorld.Visibility = serverMode
             ? Visibility.Collapsed
-            : Visibility.Visible;
-        ItemScreenshot.Visibility = !PageSetupUI.HiddenForceShow && hide.InstanceScreenshot
+            : !PageSetupUI.HiddenForceShow && hide.InstanceSave
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        ItemScreenshot.Visibility = serverMode
             ? Visibility.Collapsed
-            : Visibility.Visible;
-        ItemResourcePack.Visibility = !PageSetupUI.HiddenForceShow && hide.InstanceResourcePack
+            : !PageSetupUI.HiddenForceShow && hide.InstanceScreenshot
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        ItemResourcePack.Visibility = serverMode
             ? Visibility.Collapsed
-            : Visibility.Visible;
-        ItemShader.Visibility = !PageSetupUI.HiddenForceShow && hide.InstanceShader
+            : !PageSetupUI.HiddenForceShow && hide.InstanceResourcePack
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        ItemShader.Visibility = serverMode
             ? Visibility.Collapsed
-            : Visibility.Visible;
-        ItemSchematic.Visibility = !PageSetupUI.HiddenForceShow && hide.InstanceSchematic
+            : !PageSetupUI.HiddenForceShow && hide.InstanceShader
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        ItemSchematic.Visibility = serverMode
             ? Visibility.Collapsed
-            : Visibility.Visible;
-        ItemServer.Visibility = !PageSetupUI.HiddenForceShow && hide.InstanceServer
+            : !PageSetupUI.HiddenForceShow && hide.InstanceSchematic
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        ItemServer.Visibility = serverMode
             ? Visibility.Collapsed
-            : Visibility.Visible;
+            : !PageSetupUI.HiddenForceShow && hide.InstanceServer
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+
+        // 末尾统一应用一次，确保概览/设置与「插件」条目与本方法结果一致
+        RefreshPluginEntryVisibility();
     }
 
     private void RefreshButton_Click(object sender, EventArgs e) // 由边栏按钮匿名调用
@@ -116,16 +140,10 @@ public partial class PageInstanceLeft : IRefreshable
         var clientOnly = ModServerContent.ActiveTarget is null
             ? System.Windows.Visibility.Visible
             : System.Windows.Visibility.Collapsed;
+        // 注意：其余客户端条目由 RefreshModDisabled() 统一负责（它还要兼顾
+        // 用户的「隐藏功能」配置），这里只处理它不碰的这几项。
         ItemOverall.Visibility = clientOnly;
         ItemSetup.Visibility = clientOnly;
-        ItemInstall.Visibility = clientOnly;
-        ItemExport.Visibility = clientOnly;
-        ItemWorld.Visibility = clientOnly;
-        ItemScreenshot.Visibility = clientOnly;
-        ItemResourcePack.Visibility = clientOnly;
-        ItemShader.Visibility = clientOnly;
-        ItemSchematic.Visibility = clientOnly;
-        ItemServer.Visibility = clientOnly;
     }
 
     public void Refresh(FormMain.PageSubType subType)
