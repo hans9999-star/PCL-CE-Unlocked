@@ -1486,6 +1486,9 @@ public partial class FormMain
         VersionInstall = 10,
         VersionServer = 11,
         VersionModJarInJar = 12,
+
+        /// <summary>插件管理（分支新增，与「模组」并列的独立分类）。</summary>
+        VersionPlugin = 13,
         VersionSavesInfo = 0,
         VersionSavesDatapack = 1
     }
