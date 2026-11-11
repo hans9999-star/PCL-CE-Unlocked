@@ -279,6 +279,14 @@ public partial class PageComp
                     break;
                 }
 
+            // 服务端模式下 CurseForge 无法过滤，把来源下拉也切到 Modrinth，保持界面与行为一致
+            foreach (MyComboBoxItem item in ComboSearchSource.Items)
+                if (item.Tag?.ToString() == ((int)ModComp.CompSourceType.Modrinth).ToString())
+                {
+                    ComboSearchSource.SelectedItem = item;
+                    break;
+                }
+
             if (isLoaderInited)
                 StartNewSearch();
             ScrollToHome();
@@ -308,6 +316,14 @@ public partial class PageComp
             else if (targetVersion.Info.HasQuilt) ComboSearchLoader.SelectedItem = GetTargetItemByName("Quilt");
             targetVersion = null;
             // 如果已经完成请求，则重新开始
+            // 服务端模式下 CurseForge 无法过滤，把来源下拉也切到 Modrinth，保持界面与行为一致
+            foreach (MyComboBoxItem item in ComboSearchSource.Items)
+                if (item.Tag?.ToString() == ((int)ModComp.CompSourceType.Modrinth).ToString())
+                {
+                    ComboSearchSource.SelectedItem = item;
+                    break;
+                }
+
             if (isLoaderInited)
                 StartNewSearch();
             ScrollToHome();
@@ -388,9 +404,12 @@ public partial class PageComp
         request.source = (ModComp.CompSourceType)ModBase.Val(((MyComboBoxItem)ComboSearchSource.SelectedItem).Tag);
         // 双保险：任一路径能证明这是服务端内容即可
         request.serverOnly = pageIsServerContent || ModServerContent.ActiveTarget is not null;
-        // 分支说明：CurseForge 的搜索接口没有资源类型过滤（只用 sortField），
-        // 插件模式下会把客户端 mod 当成插件返回，所以插件只走 Modrinth。
-        if (PageType == ModComp.CompType.Plugin)
+        // 分支说明：服务端内容管理下一律排除 CurseForge。
+        // 原因：CurseForge 的搜索接口既没有资源类型过滤（只用 sortField），
+        // 也没有 server_side 之类的「服务端可用」字段，无法过滤掉纯客户端 mod；
+        // 而插件的 server_side 常为 unknown，加了分面反而误杀。
+        // Modrinth 两者都支持，因此服务端场景只走 Modrinth。
+        if (request.serverOnly || PageType == ModComp.CompType.Plugin)
             request.source &= ~ModComp.CompSourceType.CurseForge;
         request.sort = (ModComp.CompSortType)ModBase.Val(((MyComboBoxItem)ComboSearchSort.SelectedItem).Tag);
         return request;
