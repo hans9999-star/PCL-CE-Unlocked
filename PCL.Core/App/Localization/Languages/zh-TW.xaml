@@ -2960,6 +2960,19 @@
     <sys:String x:Key="Setup.Misc.Network.DoH.ToolTip">使用 DoH 解析位址可取得品質較佳的 IP 結果，改善啟動器的網路連線。如果您已部署 DoH 解析服務，可以關閉此功能。</sys:String>
     <sys:String x:Key="Setup.Misc.Network.HttpProxy">HTTP Proxy</sys:String>
     <sys:String x:Key="Setup.Misc.Network.Title">網路</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Title">AI 崩潰日誌分析</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Description">內建崩潰分析給不出結論時，可以讓 AI 再讀一遍日誌。需要填寫一個 OpenAI 相容介面的位址，介面需要支援 /chat/completions。留空則不啟用這條路徑。</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Endpoint">介面位址</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Model">模型</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.ApiKey">API Key</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.ApiKey.Hint">留空表示不需要認證</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Enabled">啟用 AI 分析</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Test">測試連線</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Testing">測試中…</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestOk">連線成功，模型 {0}</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestUnauthorized">端點可達，但需要填寫 API Key</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestFailed">連線失敗：{0}</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestNotConfigured">還沒填介面位址</sys:String>
 
     <!-- Setup.Misc.Network.Proxy -->
 
