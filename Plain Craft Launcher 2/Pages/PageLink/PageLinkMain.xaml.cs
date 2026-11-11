@@ -1146,10 +1146,53 @@ public partial class PageLinkMain
         ModServerContent.ActiveTarget = ModServerContent.BuildTarget(software, version, vanilla,
             $"{software} · {vanilla}");
 
+        // 分支说明：实例设置下的其它子页（概览/存档/服务器…）以及 FormMain 的窗口激活钩子
+        // 都会直接解引用 PageInstanceLeft.McInstance（全项目 131 处，无法逐个加空值防护），
+        // 因此从联机页进入前必须先把当前实例补上，否则整个实例设置页会崩。
+        // 内容管理本身不依赖这个实例 —— 服务端目标由 ActiveTarget 提供。
+        var fallback = ResolveInstanceForContent(vanilla);
+        if (fallback is null)
+        {
+            ModServerContent.ActiveTarget = null;
+            HintService.Hint(Lang.Text("Tools.GameLink.Link.ServerHostNeedInstance"), HintType.Error);
+            return;
+        }
+
+        PageInstanceLeft.McInstance = fallback;
+        ModInstanceList.McMcInstanceSelected = fallback;
+
         // 回到联机页时停在开服视图，而不是管理页
         CurrentSubpage = Subpages.PanServerHost;
 
         ModMain.frmMain.PageChange(FormMain.PageType.InstanceSetup, FormMain.PageSubType.VersionMod);
+    }
+
+    /// <summary>
+    ///     为进入实例设置页挑一个可用的实例。<br/>
+    ///     优先选与服务端同版本的实例，其次当前选中的实例，最后取任意一个。
+    /// </summary>
+    private static McInstance? ResolveInstanceForContent(string vanilla)
+    {
+        var all = new List<McInstance>();
+        try
+        {
+            foreach (var pair in ModInstanceList.mcInstanceList)
+                if (pair.Value is not null)
+                    all.AddRange(pair.Value.Where(i => i is not null));
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerContent] 读取实例列表失败", ModBase.LogLevel.Developer);
+        }
+
+        var sameVersion = all.FirstOrDefault(i => i.Info?.VanillaName == vanilla);
+        if (sameVersion is not null) return sameVersion;
+
+        // 再退到页面上已有的实例（启动时 ModSetup 会初始化），最后才是当前选中项
+        var current = PageInstanceLeft.McInstance ?? ModInstanceList.McMcInstanceSelected;
+        if (current is not null) return current;
+
+        return all.FirstOrDefault();
     }
 
     #endregion
