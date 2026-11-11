@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -172,6 +172,21 @@ public partial class MyMsgText
         {
             myConverter.IsExited = true;
             myConverter.Result = 3;
+            Close();
+        }
+    }
+    public void Btn4_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (myConverter.IsExited)
+            return;
+        if (myConverter.Button4Action is not null)
+        {
+            myConverter.Button4Action();
+        }
+        else
+        {
+            myConverter.IsExited = true;
+            myConverter.Result = 4;
             Close();
         }
     }
