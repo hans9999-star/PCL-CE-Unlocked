@@ -41,6 +41,24 @@
                 </local:MyListItem.Buttons>
             </local:MyListItem>
 
+            <!-- 分支说明：插件与模组并列。仅服务端插件管理时显示，平时隐藏。 -->
+            <local:MyListItem x:Name="ItemPlugin" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="19"
+                              Check="PageCheck" Visibility="Collapsed"
+                              MinPaddingRight="35" Height="36" VerticalAlignment="Top"
+                              Title="{DynamicResource Download.Left.Plugin}"
+                              LogoScale="0.97"
+                              SvgIcon="lucide/package">
+                <local:MyListItem.Buttons>
+                    <x:Array Type="{x:Type local:MyIconButton}">
+                        <local:MyIconButton Tag="19" ToolTip="{DynamicResource Common.Action.Refresh}"
+                                            ToolTipService.Placement="Right" Click="RefreshButton_Click"
+                                            ToolTipService.InitialShowDelay="200" ToolTipService.VerticalOffset="-1"
+                                            LogoScale="0.85"
+                                            SvgIcon="lucide/refresh-cw" />
+                    </x:Array>
+                </local:MyListItem.Buttons>
+            </local:MyListItem>
+
             <local:MyListItem x:Name="ItemPack" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="3"
                               Check="PageCheck"
                               MinPaddingRight="35" Height="36" VerticalAlignment="Top"
