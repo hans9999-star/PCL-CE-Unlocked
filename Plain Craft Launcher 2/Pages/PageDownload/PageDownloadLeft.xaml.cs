@@ -29,8 +29,11 @@ public partial class PageDownloadLeft : IRefreshable
 
     public void Refresh(FormMain.PageSubType subType)
     {
-        // 分支说明：离开服务端插件下载页即清掉服务端目标，避免污染普通下载
-        if (subType != FormMain.PageSubType.DownloadPlugin)
+        // 分支说明：只有切到与服务端内容无关的分类时才清掉服务端目标。
+        // 「模组」「插件」两个分类都属于服务端内容管理（mod 端与插件端），
+        // 之前只放行 DownloadPlugin，导致 mod 端的服务端过滤整条失效。
+        if (subType != FormMain.PageSubType.DownloadPlugin &&
+            subType != FormMain.PageSubType.DownloadMod)
             ModServerContent.ActiveTarget = null;
         RefreshPluginEntryVisibility();
 
