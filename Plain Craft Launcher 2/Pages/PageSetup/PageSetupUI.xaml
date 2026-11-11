@@ -125,7 +125,55 @@
                                                 MaxValue="100" ValueByKey="1" Change="CustomThemeChange" />
                             </Grid>
                         </StackPanel>
-                        <local:MyCheckBox Text="{DynamicResource Setup.Ui.Basic.ShowLogo}" Margin="-1,0,0,7" Height="22"
+                        <!-- 分支说明：自定义标题图 / 背景图，以及主题文件管理。
+             放在 PanCustomTheme 之外，因此不选「自定义」配色时也能用。 -->
+        <StackPanel x:Name="PanCustomImages" Margin="0,2,0,9">
+            <Grid Height="26">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Text="{DynamicResource Setup.Ui.Theme.Custom.TitleImage}" />
+                <local:MyButton Grid.Column="1" x:Name="BtnCustomTitleImage" Padding="10,3"
+                                Text="{DynamicResource Setup.Ui.Theme.Custom.TitleImage}"
+                                Click="BtnCustomTitleImage_Click" />
+                <local:MyButton Grid.Column="2" x:Name="BtnClearTitleImage" Margin="8,0,0,0" Padding="10,3"
+                                Text="{DynamicResource Setup.Ui.Theme.Custom.ClearImage}"
+                                Click="BtnClearTitleImage_Click" />
+            </Grid>
+            <Grid Height="26" Margin="0,6,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Text="{DynamicResource Setup.Ui.Theme.Custom.BackgroundImage}" />
+                <local:MyButton Grid.Column="1" x:Name="BtnCustomBackgroundImage" Padding="10,3"
+                                Text="{DynamicResource Setup.Ui.Theme.Custom.BackgroundImage}"
+                                Click="BtnCustomBackgroundImage_Click" />
+                <local:MyButton Grid.Column="2" x:Name="BtnClearBackgroundImage" Margin="8,0,0,0" Padding="10,3"
+                                Text="{DynamicResource Setup.Ui.Theme.Custom.ClearImage}"
+                                Click="BtnClearBackgroundImage_Click" />
+            </Grid>
+        </StackPanel>
+
+        <StackPanel x:Name="PanThemeManage" Margin="0,2,0,9">
+            <TextBlock VerticalAlignment="Center" Margin="0,0,0,4"
+                       Text="{DynamicResource Setup.Ui.Theme.Manage}" />
+            <StackPanel x:Name="PanThemeList" />
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                <local:MyButton x:Name="BtnSaveTheme" Padding="10,3"
+                                Text="{DynamicResource Setup.Ui.Theme.SaveCurrent}"
+                                Click="BtnSaveTheme_Click" />
+                <local:MyButton x:Name="BtnImportTheme" Margin="8,0,0,0" Padding="10,3"
+                                Text="{DynamicResource Setup.Ui.Theme.Import}"
+                                Click="BtnImportTheme_Click" />
+            </StackPanel>
+        </StackPanel>
+        <local:MyCheckBox Text="{DynamicResource Setup.Ui.Basic.ShowLogo}" Margin="-1,0,0,7" Height="22"
                                           x:Name="CheckLauncherLogo" Tag="UiLauncherLogo" Change="CheckBoxChange" />
                         <local:MyCheckBox Text="{DynamicResource Setup.Ui.Basic.LockWindow}" Margin="-1,0,0,7" Height="22" x:Name="CheckLockWindowSize"
                                           Tag="UiLockWindowSize" Change="CheckBoxChange" />
