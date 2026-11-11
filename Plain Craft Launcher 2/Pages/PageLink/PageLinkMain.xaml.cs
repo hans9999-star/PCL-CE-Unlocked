@@ -1012,7 +1012,7 @@ public partial class PageLinkMain
 
         try
         {
-            ModServerHost.PrepareFiles(dir, port, onlineMode, maxPlayers, "PCL CE Unlocked Server");
+            ModServerHost.PrepareFiles(dir, port, onlineMode, maxPlayers, "PCL Unbound Server");
             // 记录类型与版本，便于「服务端」下拉准确枚举
             ModServerHost.WriteServerMark(dir, software, version);
         }
