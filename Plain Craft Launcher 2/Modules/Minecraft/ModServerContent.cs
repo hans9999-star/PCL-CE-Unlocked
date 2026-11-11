@@ -51,6 +51,27 @@ public static class ModServerContent
     /// </summary>
     public static ServerContentTarget? ActiveTarget;
 
+    /// <summary>
+    ///     本机已安装的游戏实例（按名称排序），供开服页做实例选择用。
+    /// </summary>
+    public static List<McInstance> GetInstances()
+    {
+        var list = new List<McInstance>();
+        try
+        {
+            foreach (var pair in ModInstanceList.mcInstanceList)
+                if (pair.Value is not null)
+                    list.AddRange(pair.Value.Where(i => i is not null));
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerContent] 读取实例列表失败", ModBase.LogLevel.Developer);
+        }
+
+        list.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+        return list;
+    }
+
     /// <summary>该服务端类型下管理的是哪类内容。</summary>
     public static ContentKind KindOf(ServerSoftware software) =>
         software == ServerSoftware.Paper ? ContentKind.Plugin : ContentKind.Mod;
