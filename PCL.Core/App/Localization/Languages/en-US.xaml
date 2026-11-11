@@ -119,6 +119,7 @@
     <sys:String x:Key="Crash.Ai.Empty">The AI returned nothing</sys:String>
     <sys:String x:Key="Crash.Ai.Failed">AI analysis failed: {0}</sys:String>
     <sys:String x:Key="Crash.Ai.NeedKey">This endpoint needs an API key. Enter it once and it will be remembered:</sys:String>
+    <sys:String x:Key="Crash.Ai.NeedModel">This endpoint expects the model name in provider/model form (e.g. openai/gpt-4o). Enter the correct model name:</sys:String>
     <sys:String x:Key="Crash.Dialog.Button.GoToModify">Modify settings</sys:String>
     <sys:String x:Key="Crash.Dialog.Button.OpenLog">View log</sys:String>
     <sys:String x:Key="Crash.Dialog.Title.Auto">Minecraft crashed</sys:String>
