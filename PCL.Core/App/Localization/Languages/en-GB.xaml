@@ -3394,6 +3394,7 @@
     <sys:String x:Key="Tools.GameLink.Link.ServerHostCommandHint">Type a command and press Enter, e.g. stop, list, op PLAYER</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostConsole">Server Console</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostManage">Content</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostNeedInstance">Install at least one game instance before opening content management (the instance page depends on it). Hosting itself is unaffected.</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostBack">Back</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostOpenFolder">Open Folder</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostInstalled">Installed</sys:String>
