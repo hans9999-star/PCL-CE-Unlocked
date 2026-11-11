@@ -108,13 +108,18 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
 
             // 分支说明：本机的 OpenAI 兼容服务通常要求 API Key，缺 key 时返回 401。
             // 这里直接让用户填一次并自动重试，省得再去翻配置文件。
-            if (!retried && ex.Message.Contains("401"))
+            var needKey = !retried && ex.Message.Contains("401");
+            var needModel = !retried && ex.Message.Contains("400") &&
+                            ex.Message.Contains("model", StringComparison.OrdinalIgnoreCase);
+            if (needKey || needModel)
             {
                 var key = Microsoft.VisualBasic.Interaction.InputBox(
-                    Lang.Text("Crash.Ai.NeedKey"), Lang.Text("Crash.Ai.Title"), "");
+                    Lang.Text(needKey ? "Crash.Ai.NeedKey" : "Crash.Ai.NeedModel"),
+                    Lang.Text("Crash.Ai.Title"), "");
                 if (!string.IsNullOrWhiteSpace(key))
                 {
-                    Config.Preference.Ai.ApiKey = key.Trim();
+                    if (needKey) Config.Preference.Ai.ApiKey = key.Trim();
+                    else Config.Preference.Ai.Model = key.Trim();
                     await _AnalyzeWithAiAsync(true).ConfigureAwait(false);
                     return;
                 }
