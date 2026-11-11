@@ -3029,6 +3029,8 @@
     <sys:String x:Key="Setup.Misc.Ai.TestUnauthorized">端点可达，但需要填写 API Key</sys:String>
     <sys:String x:Key="Setup.Misc.Ai.TestFailed">连接失败：{0}</sys:String>
     <sys:String x:Key="Setup.Misc.Ai.TestNotConfigured">还没填接口地址</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Model.Hint">例如 gpt-4o-mini、deepseek-chat，具体看你的服务</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestNoModel">模型还没填</sys:String>
 
     <!-- Setup.Misc.Network.Proxy -->
 
