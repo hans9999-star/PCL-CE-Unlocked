@@ -3029,6 +3029,8 @@
     <sys:String x:Key="Setup.Misc.Ai.TestUnauthorized">Endpoint reachable, but an API key is required</sys:String>
     <sys:String x:Key="Setup.Misc.Ai.TestFailed">Connection failed: {0}</sys:String>
     <sys:String x:Key="Setup.Misc.Ai.TestNotConfigured">Endpoint is empty</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Model.Hint">e.g. gpt-4o-mini, deepseek-chat - depends on your provider</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestNoModel">Model is empty</sys:String>
 
     <!-- Setup.Misc.Network.Proxy -->
 
