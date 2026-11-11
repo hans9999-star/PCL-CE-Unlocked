@@ -20,6 +20,39 @@ public static class UpdateManager
         new UpdatesGitHubModel("hans9999-star", "PCL-Unbound", "Plain Craft Launcher Unbound Edition")
     });
 
+    /// <summary>
+    ///     测试 GitHub 加速源是否可用：按当前配置请求仓库的 Releases API。
+    /// </summary>
+    public static async Task<(bool Ok, string Message)> TestGitHubProxyAsync()
+    {
+        var proxy = (Config.Update.GitHubProxy ?? "").Trim();
+        if (!string.IsNullOrWhiteSpace(proxy) && !proxy.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            return (false, Lang.Text("Setup.Update.GitHubProxy.TestInvalid"));
+
+        var url = "https://api.github.com/repos/hans9999-star/PCL-Unbound/releases/latest";
+        if (!string.IsNullOrWhiteSpace(proxy))
+        {
+            if (!proxy.EndsWith("/", StringComparison.Ordinal)) proxy += "/";
+            url = proxy + url;
+        }
+
+        try
+        {
+            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "PCL-Unbound");
+            using var response = await http.GetAsync(url).ConfigureAwait(false);
+            if (response.IsSuccessStatusCode)
+                return (true, Lang.Text("Setup.Update.GitHubProxy.TestOk",
+                    string.IsNullOrWhiteSpace(proxy) ? Lang.Text("Setup.Update.GitHubProxy.Direct") : proxy));
+
+            return (false, Lang.Text("Setup.Update.GitHubProxy.TestFailed", "HTTP " + (int)response.StatusCode));
+        }
+        catch (Exception ex)
+        {
+            return (false, Lang.Text("Setup.Update.GitHubProxy.TestFailed", ex.Message));
+        }
+    }
+
     public static bool IsCurrentVersionBeta
     {
         get
