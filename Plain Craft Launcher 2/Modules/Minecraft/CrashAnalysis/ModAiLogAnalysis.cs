@@ -74,11 +74,14 @@ internal static class ModAiLogAnalysis
         if (!string.IsNullOrWhiteSpace(ApiKey))
             http.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Bearer " + ApiKey);
 
+        ModBase.Log($"[AI] 请求 {Endpoint}/chat/completions, 模型 {Model}, 日志 {log.Length} 字符");
+        var startedAt = DateTime.Now;
         using var content = new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json");
         using var response = await http.PostAsync(Endpoint + "/chat/completions", content, token)
             .ConfigureAwait(false);
 
         var body = await response.Content.ReadAsStringAsync(token).ConfigureAwait(false);
+        ModBase.Log($"[AI] 响应 HTTP {(int)response.StatusCode}, {(int)(DateTime.Now - startedAt).TotalMilliseconds} ms, {body.Length} 字符");
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"HTTP {(int)response.StatusCode}：{Trim(body)}");
 
