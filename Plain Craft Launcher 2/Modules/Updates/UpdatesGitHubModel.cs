@@ -32,6 +32,19 @@ public class UpdatesGitHubModel : IUpdateSource
 
     public string SourceName { get; set; }
 
+    /// <summary>
+    ///     分支说明：在中国大陆直连 api.github.com 与 releases/download 经常超时。
+    ///     这里允许用户配置一个加速前缀（例如 https://gh-proxy.com/），
+    ///     为空则直连。前缀直接拼在完整原始 URL 之前。
+    /// </summary>
+    private static string ViaProxy(string url)
+    {
+        var proxy = (Config.Update.GitHubProxy ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(proxy)) return url;
+        if (!proxy.EndsWith("/", StringComparison.Ordinal)) proxy += "/";
+        return proxy + url;
+    }
+
     public bool IsAvailable() => !string.IsNullOrWhiteSpace(_apiUrl);
 
     public bool RefreshCache()
@@ -41,7 +54,7 @@ public class UpdatesGitHubModel : IUpdateSource
         // 拖慢窗口加载动画。这里改用短超时、不重试，让 UpdatesWrapperModel
         // 能快速回退到下一个可用源（PCL CE 官方源）。
         var param = new RequestParam { Timeout = 8000, Retries = 0 };
-        var json = Requester.FetchString(_apiUrl, param);
+        var json = Requester.FetchString(ViaProxy(_apiUrl), param);
         var release = ModBase.GetJson(json).ToObject<GitHubRelease>();
         if (release is null) throw new NullReferenceException("无法解析 GitHub Release 信息！");
         _cache = release;
@@ -94,7 +107,7 @@ public class UpdatesGitHubModel : IUpdateSource
             {
                 load.output = new List<DownloadFile>
                 {
-                    new(new[] { asset.BrowserDownloadUrl }, tempPath)
+                    new(new[] { ViaProxy(asset.BrowserDownloadUrl) }, tempPath)
                 };
             }));
 
