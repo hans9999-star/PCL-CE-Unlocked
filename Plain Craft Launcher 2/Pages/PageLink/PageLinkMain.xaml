@@ -207,9 +207,9 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <!-- 分支说明：与启动页一致的实例选择。选中后自动填好类型与版本，但仍可手改。 -->
+                                <!-- 分支说明：选择已创建的服务端；选中后自动填好类型与版本，仍可手改（改类型/版本即新建）。 -->
                                 <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
-                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostInstance}" />
+                                           Text="{DynamicResource Tools.GameLink.Link.ServerHostServerSelect}" />
                                 <local:MyComboBox Grid.Row="0" Grid.Column="1" x:Name="ComboServerInstance" Width="200"
                                                   Height="30" VerticalAlignment="Center"
                                                   SelectionChanged="ComboServerInstance_SelectionChanged" />
