@@ -93,6 +93,40 @@ internal static class ModAiLogAnalysis
         return text.Trim();
     }
 
+    /// <summary>
+    ///     测试端点连通性：请求 {Endpoint}/models。
+    /// </summary>
+    /// <returns>是否可用，以及给用户看的提示文案。</returns>
+    public static async Task<(bool Ok, string Message)> TestAsync()
+    {
+        if (!IsAvailable)
+            return (false, PCL.Core.App.Localization.Lang.Text("Setup.Misc.Ai.TestNotConfigured"));
+
+        var url = Endpoint + "/models";
+        try
+        {
+            var timeout = Math.Clamp(Config.Preference.Ai.TimeoutSeconds, 10, 600);
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(Math.Min(timeout, 30)) };
+            if (!string.IsNullOrWhiteSpace(ApiKey))
+                http.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Bearer " + ApiKey);
+
+            using var response = await http.GetAsync(url).ConfigureAwait(false);
+            if (response.IsSuccessStatusCode)
+                return (true, PCL.Core.App.Localization.Lang.Text("Setup.Misc.Ai.TestOk", Model));
+
+            if ((int)response.StatusCode == 401)
+                return (false, PCL.Core.App.Localization.Lang.Text("Setup.Misc.Ai.TestUnauthorized"));
+
+            var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return (false, PCL.Core.App.Localization.Lang.Text("Setup.Misc.Ai.TestFailed",
+                $"HTTP {(int)response.StatusCode}：" + Trim(body)));
+        }
+        catch (Exception ex)
+        {
+            return (false, PCL.Core.App.Localization.Lang.Text("Setup.Misc.Ai.TestFailed", ex.Message));
+        }
+    }
+
     private static string Trim(string value) =>
         value.Length <= 400 ? value : value[..400] + "……";
 }
