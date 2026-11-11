@@ -51,7 +51,7 @@ jobs:
           $size = [math]::Round((Get-Item $exe).Length / 1MB, 2)
           Write-Host "产物大小: $size MB"
           New-Item -ItemType Directory -Force -Path release | Out-Null
-          Copy-Item $exe "release/PCL-CE-Unlocked.exe"
+          Copy-Item $exe "release/PCL-Unbound.exe"
 
       # 用仓库 Secrets 里的自签名证书给 exe 签名
       - name: Sign executable
@@ -74,7 +74,7 @@ jobs:
           Write-Host "signtool: $signtool"
 
           & $signtool sign /f $pfx /p $env:PFX_PASSWORD /fd SHA256 `
-            /tr http://timestamp.digicert.com /td SHA256 /v "release/PCL-CE-Unlocked.exe"
+            /tr http://timestamp.digicert.com /td SHA256 /v "release/PCL-Unbound.exe"
           if ($LASTEXITCODE -ne 0) { throw "签名失败，退出码 $LASTEXITCODE" }
 
           Remove-Item $pfx -Force
@@ -86,7 +86,7 @@ jobs:
           # 注意：不要往 Root 证书库安装自签名证书 —— 在无 UI 的 runner 上
           # X509Store.Add 会弹出确认对话框并永久挂起（曾导致 CI 卡死）。
           # 这里只校验「确实带了签名且签名者是预期主体」，不依赖信任链。
-          $file = "release/PCL-CE-Unlocked.exe"
+          $file = "release/PCL-Unbound.exe"
           $sig = Get-AuthenticodeSignature $file
           Write-Host "签名状态: $($sig.Status)"
           if (-not $sig.SignerCertificate) { throw "产物没有签名" }
@@ -100,8 +100,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PCL-CE-Unlocked-win-x64
-          path: release/PCL-CE-Unlocked.exe
+          name: PCL-Unbound-win-x64
+          path: release/PCL-Unbound.exe
 
       # 只有打 tag 时才创建 Release，启动器的更新检查读取的就是这里
       - name: Publish Release
@@ -110,7 +110,7 @@ jobs:
         with:
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          files: release/PCL-CE-Unlocked.exe
+          files: release/PCL-Unbound.exe
           generate_release_notes: true
           draft: false
           prerelease: false
