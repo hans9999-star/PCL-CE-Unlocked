@@ -3451,6 +3451,7 @@
     <sys:String x:Key="Tools.GameLink.Link.ServerHostCommandHint">输入命令后回车，如 stop、list、op 玩家名</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostConsole">服务端控制台</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostManage">内容管理</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostNeedInstance">需要先安装至少一个游戏实例才能打开内容管理（实例设置页依赖它）；开服本身不受影响。</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostBack">← 返回</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostOpenFolder">打开文件夹</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostInstalled">已安装</sys:String>
