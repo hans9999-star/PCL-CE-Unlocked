@@ -82,16 +82,29 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
     private bool _HasSolution() => context.Result?.HasFinding == true;
 
     /// <summary>把日志交给 AI 分析，并把结果弹出来。</summary>
+    /// <summary>把日志交给 AI 分析，并把结果弹出来。</summary>
     private async Task _AnalyzeWithAiAsync(bool retried = false)
     {
         try
         {
-            HintWrapper.Show(Lang.Text("Crash.Ai.Analyzing"), HintTheme.Info);
+            // 分支说明：Hint 是几秒就消失的提示，而请求最长要等超时时间（默认 120s）。
+            // 只闪一下就没了，用户会以为界面卡住。这里等待期间每 3 秒重刷一次提示，
+            // 关键步骤另有日志输出，保证过程可见。
+            using var hintCts = new CancellationTokenSource();
+            var hintTask = _KeepAnalyzingHintAsync(hintCts.Token);
 
-            // 兜底：LogAll 为空时改用整理过的日志集合
-            var log = context.LogAll;
-            if (string.IsNullOrWhiteSpace(log)) log = context.PreparedLogs?.All ?? "";
-            var text = await ModAiLogAnalysis.AnalyzeAsync(log).ConfigureAwait(false);
+            string text;
+            try
+            {
+                var log = context.LogAll;
+                if (string.IsNullOrWhiteSpace(log)) log = context.PreparedLogs?.All ?? "";
+                text = await ModAiLogAnalysis.AnalyzeAsync(log).ConfigureAwait(false);
+            }
+            finally
+            {
+                hintCts.Cancel();
+                await hintTask.ConfigureAwait(false);
+            }
 
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -106,8 +119,8 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
         {
             LogWrapper.Error(ex, "Crash", "AI 分析崩溃日志失败");
 
-            // 分支说明：本机的 OpenAI 兼容服务通常要求 API Key，缺 key 时返回 401。
-            // 这里直接让用户填一次并自动重试，省得再去翻配置文件。
+            // 401 = 缺 API Key；提到 model 的 400 = 模型名不被接受
+            //（有的本地服务要求 provider/model 形式）。两者都就地让用户填一次再重试。
             var needKey = !retried && ex.Message.Contains("401");
             var needModel = !retried && ex.Message.Contains("400") &&
                             ex.Message.Contains("model", StringComparison.OrdinalIgnoreCase);
@@ -129,6 +142,23 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
                 Lang.Text("Crash.Ai.Title"), MsgBoxTheme.Error);
         }
     }
+
+    private static async Task _KeepAnalyzingHintAsync(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            HintWrapper.Show(Lang.Text("Crash.Ai.Analyzing"), HintTheme.Info);
+            try
+            {
+                await Task.Delay(3000, token).ConfigureAwait(false);
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+        }
+    }
+
 
     private static string _GetSecondButtonText(
         bool isHandAnalyze,
