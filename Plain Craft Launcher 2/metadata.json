@@ -1,10 +1,10 @@
 {
   "name": "Plain Craft Launcher Unbound Edition",
   "version": {
-    "base": "1.0.3",
+    "base": "1.0.4",
     "upstream": "2.12.1",
     "suffix": "",
-    "code": 103
+    "code": 104
   },
   "licenses": [
     {
