@@ -270,7 +270,7 @@ public static partial class Config
 
     [ConfigItem<string>("AiEndpoint", "", ConfigSource.Local)] public partial string Endpoint { get; set; }
 
-    [ConfigItem<string>("AiModel", "gpt-3.5-turbo", ConfigSource.Local)] public partial string Model { get; set; }
+    [ConfigItem<string>("AiModel", "", ConfigSource.Local)] public partial string Model { get; set; }
 
     [ConfigItem<string>("AiApiKey", "", ConfigSource.Local)] public partial string ApiKey { get; set; }
 
