@@ -260,7 +260,7 @@ public static partial class Config
         /// </summary>
         /// <summary>
 ///     分支说明：崩溃分析给出不了方案时，可以让 AI 读日志再分析一次。
-///     Endpoint 是 OpenAI 兼容地址（形如 http://127.0.0.1:8326/v1），
+///     Endpoint 是 OpenAI 兼容地址（形如 https://api.example.com/v1），默认留空 = 不启用。
 ///     实际请求 {Endpoint}/chat/completions。可用环境变量 PCL_AI_ENDPOINT /
 ///     PCL_AI_MODEL / PCL_AI_KEY 覆盖，免去改配置文件。
 /// </summary>
@@ -268,7 +268,7 @@ public static partial class Config
 {
     [ConfigItem<bool>("AiEnabled", true, ConfigSource.Local)] public partial bool Enabled { get; set; }
 
-    [ConfigItem<string>("AiEndpoint", "http://127.0.0.1:8326/v1", ConfigSource.Local)] public partial string Endpoint { get; set; }
+    [ConfigItem<string>("AiEndpoint", "", ConfigSource.Local)] public partial string Endpoint { get; set; }
 
     [ConfigItem<string>("AiModel", "gpt-3.5-turbo", ConfigSource.Local)] public partial string Model { get; set; }
 
