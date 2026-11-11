@@ -333,6 +333,14 @@ public partial class PageInstanceCompResource : IRefreshable
                 ModMain.frmInstanceLeft.ItemMod.Checked = true;
                 break;
             }
+            case ModComp.CompType.Plugin:
+            {
+                // 分支说明：插件是独立分类，刷新它自己那一份列表
+                if (ModMain.frmInstancePlugin is not null)
+                    ModMain.frmInstancePlugin.ReloadCompFileList(true);
+                ModMain.frmInstanceLeft.ItemPlugin.Checked = true;
+                break;
+            }
             case ModComp.CompType.ResourcePack:
             {
                 if (ModMain.frmInstanceResourcePack is not null)
