@@ -110,6 +110,11 @@ public partial class PageInstanceLeft : IRefreshable
                 PageInstanceCompResource.Refresh(ModComp.CompType.Mod);
                 break;
             }
+            case FormMain.PageSubType.VersionPlugin:
+            {
+                PageInstanceCompResource.Refresh(ModComp.CompType.Plugin);
+                break;
+            }
             case FormMain.PageSubType.VersionScreenshot:
             {
                 var ignore= PageInstanceScreenshot.RefreshAsync();
@@ -197,9 +202,12 @@ public partial class PageInstanceLeft : IRefreshable
     {
         if (sender is MyListItem item && item.Tag is not null)
         {
-            // 分支说明：手动切到别的子页即离开服务端内容管理，清掉服务端目标
+            // 分支说明：手动切到别的子页即离开服务端内容管理，清掉服务端目标；
+            // 「模组」与「插件」两个子页都仍属于内容管理，故保留。
+            var sub = (int)ModBase.Val(item.Tag);
             if (ModServerContent.ActiveTarget is not null &&
-                (int)ModBase.Val(item.Tag) != (int)FormMain.PageSubType.VersionMod)
+                sub != (int)FormMain.PageSubType.VersionMod &&
+                sub != (int)FormMain.PageSubType.VersionPlugin)
                 ModServerContent.ActiveTarget = null;
             PageChange((FormMain.PageSubType)ModBase.Val(item.Tag));
         }
@@ -217,17 +225,16 @@ public partial class PageInstanceLeft : IRefreshable
                     ModMain.frmInstanceOverall = new PageInstanceOverall();
                 return ModMain.frmInstanceOverall;
             }
+            case FormMain.PageSubType.VersionPlugin:
+            {
+                // 分支说明：插件是独立分类，恒用 Plugin 类型构造
+                // （currentCompType 是 readonly，在构造函数里决定 UI 与加载器）
+                if (ModMain.frmInstancePlugin is null)
+                    ModMain.frmInstancePlugin = new PageInstanceCompResource(ModComp.CompType.Plugin);
+                return ModMain.frmInstancePlugin;
+            }
             case FormMain.PageSubType.VersionMod:
             {
-                // 分支说明：服务端插件管理复用同一个「Mod」子页，但必须按 Plugin 类型构造
-                // （currentCompType 是 readonly，在构造函数里决定 UI 与加载器）
-                if (ModServerContent.ActiveTarget?.CompType == ModComp.CompType.Plugin)
-                {
-                    if (ModMain.frmInstancePlugin is null)
-                        ModMain.frmInstancePlugin = new PageInstanceCompResource(ModComp.CompType.Plugin);
-                    return ModMain.frmInstancePlugin;
-                }
-
                 if (ModMain.frmInstanceMod is null)
                     ModMain.frmInstanceMod = new PageInstanceCompResource(ModComp.CompType.Mod);
                 return ModMain.frmInstanceMod;
