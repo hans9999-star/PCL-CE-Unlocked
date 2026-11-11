@@ -70,7 +70,9 @@ public partial class Application
             // 设置初始窗口
             if (Config.Preference.ShowStartupLogo)
             {
-                ModMain.frmStart = new SplashScreen(@"Images\icon.ico");
+                // 分支说明：SplashScreen 是位图启动画面，不解析 ICO 容器的多尺寸，只会取其中一帧
+                // （实际取到 16x16），放大后很糊。改用 256x256 的 icon.png。
+                ModMain.frmStart = new SplashScreen(@"Images\icon.png");
                 ModMain.frmStart.Show(false, true);
             }
 
