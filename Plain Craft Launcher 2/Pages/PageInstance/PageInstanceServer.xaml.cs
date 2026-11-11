@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -281,7 +281,13 @@ public partial class PageInstanceServer : MyPageRight
     {
         serverList.Clear();
 
-        var serversFile = Path.Combine(PageInstanceLeft.McInstance.PathIndie, "servers.dat");
+        // 分支说明：本页可能在没有当前实例的情况下被打开（例如从联机页进入内容管理后
+        // 又切到本页），此时没有 servers.dat 可读，直接视为无服务器。
+        var instance = PageInstanceLeft.McInstance;
+        if (instance is null)
+            return;
+
+        var serversFile = Path.Combine(instance.PathIndie, "servers.dat");
         if (!File.Exists(serversFile))
             return;
 
