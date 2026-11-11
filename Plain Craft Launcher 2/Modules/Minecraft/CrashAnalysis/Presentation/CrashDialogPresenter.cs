@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.IO;
 using PCL.Core.App;
 using PCL.Core.App.Localization;
@@ -87,6 +88,7 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
     /// <summary>把日志交给 AI 分析，并把结果弹出来。</summary>
     /// <summary>把日志交给 AI 分析，并把结果弹出来。</summary>
     /// <summary>把日志交给 AI 分析，期间显示进度窗，完成后弹出结果。</summary>
+    /// <summary>把日志交给 AI 分析，期间显示进度窗，完成后弹出结果。</summary>
     private async Task _AnalyzeWithAiAsync(bool retried = false)
     {
         try
@@ -95,45 +97,82 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
             if (string.IsNullOrWhiteSpace(log)) log = context.PreparedLogs?.All ?? "";
 
             // 分支说明：请求最长要等超时时间（默认 120s），光靠几秒就消失的 toast
-            // 看不出是在跑还是卡死，所以给一个真正的进度窗：不确定进度条 + 已等待秒数 + 取消。
+            // 看不出是在跑还是卡死。这里做一个外观与 PCL 消息框一致的进度窗：
+            // 同样的圆角卡片、投影、23px 标题与分隔线，内容用 PCL 自己的 MyLoading
+            // （镐子旋转动画）并实时显示已等待秒数，右下角可取消。
             using var cts = new CancellationTokenSource();
-            var status = new TextBlock
+            var res = System.Windows.Application.Current.Resources;
+
+            var title = new TextBlock
             {
-                Text = Lang.Text("Crash.Ai.Analyzing"),
-                TextWrapping = TextWrapping.Wrap,
-                Foreground = (Brush)System.Windows.Application.Current.Resources["ColorBrushGray1"],
-                Margin = new Thickness(0, 0, 0, 12)
+                Text = Lang.Text("Crash.Ai.Title"),
+                FontSize = 23,
+                Margin = new Thickness(7, -1, 40, 9),
+                Foreground = (Brush)res["ColorBrush2"]
             };
+            var line = new System.Windows.Shapes.Rectangle { Height = 2, Fill = title.Foreground };
+            var loading = new MyLoading
+            {
+                Foreground = (SolidColorBrush)res["ColorBrush3"],
+                Margin = new Thickness(0, 8, 0, 0),
+                MinHeight = 120
+            };
+            loading.LabText.Text = Lang.Text("Crash.Ai.Analyzing");
             var cancelButton = new MyButton
             {
                 Text = Lang.Text("Common.Action.Cancel"),
                 Padding = new Thickness(12, 4, 12, 4),
+                Margin = new Thickness(0, 10, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right
             };
             cancelButton.Click += (_, _) => cts.Cancel();
 
-            var panel = new StackPanel { Margin = new Thickness(18) };
-            panel.Children.Add(status);
-            panel.Children.Add(new ProgressBar
+            var stack = new StackPanel { Margin = new Thickness(22, 22, 22, 20) };
+            stack.Children.Add(title);
+            stack.Children.Add(line);
+            stack.Children.Add(loading);
+            stack.Children.Add(cancelButton);
+
+            var card = new Border
             {
-                IsIndeterminate = true,
-                Height = 6,
-                Margin = new Thickness(0, 0, 0, 14),
-                Foreground = (Brush)System.Windows.Application.Current.Resources["ColorBrush3"]
-            });
-            panel.Children.Add(cancelButton);
+                CornerRadius = new CornerRadius(7),
+                Background = (Brush)res["ColorBrushBackground"],
+                Effect = new DropShadowEffect
+                {
+                    Color = (Color)res["ColorObjectMsgBoxShadow"],
+                    BlurRadius = 20,
+                    ShadowDepth = 2,
+                    Opacity = 0.8,
+                    RenderingBias = RenderingBias.Performance
+                },
+                Child = stack
+            };
 
             var window = new Window
             {
                 Title = Lang.Text("Crash.Ai.Title"),
-                Width = 400,
-                Height = 172,
+                Width = 420,
+                SizeToContent = SizeToContent.Height,
+                WindowStyle = WindowStyle.None,
+                AllowsTransparency = true,
+                Background = null,
                 ResizeMode = ResizeMode.NoResize,
                 ShowInTaskbar = false,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = ModMain.frmMain,
-                Background = (Brush)System.Windows.Application.Current.Resources["ColorBrushBackground"],
-                Content = panel
+                Content = card
+            };
+            // 无边框窗口要自己支持拖动
+            card.MouseLeftButtonDown += (_, _) =>
+            {
+                try
+                {
+                    window.DragMove();
+                }
+                catch
+                {
+                    // 拖动过程中的异常无需处理
+                }
             };
             window.Show();
 
@@ -155,7 +194,7 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
                     var seconds = (int)(DateTime.Now - startedAt).TotalSeconds;
                     ModBase.RunInUi(() =>
                     {
-                        if (window.IsVisible) status.Text = Lang.Text("Crash.Ai.Elapsed", seconds);
+                        if (window.IsVisible) loading.LabText.Text = Lang.Text("Crash.Ai.Elapsed", seconds);
                     });
                 }
             });
