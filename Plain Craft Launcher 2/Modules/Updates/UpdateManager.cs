@@ -17,7 +17,7 @@ public static class UpdateManager
     // 自动更新会把改版覆盖回官方版，所有解除限制的功能全部失效！
     public static UpdatesWrapperModel remoteServer = new(new List<IUpdateSource>
     {
-        new UpdatesGitHubModel("hans9999-star", "PCL-CE-Unlocked", "Plain Craft Launcher Unbound Edition")
+        new UpdatesGitHubModel("hans9999-star", "PCL-Unbound", "Plain Craft Launcher Unbound Edition")
     });
 
     public static bool IsCurrentVersionBeta
