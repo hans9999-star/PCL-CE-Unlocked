@@ -1463,12 +1463,15 @@ public partial class PageInstanceCompResource : IRefreshable
         // 分支说明：服务端模式下，下载页按服务端的版本 / 加载器筛选，落地目录也指向服务端
         if (ModServerContent.ActiveTarget is { } target)
         {
+            // 分支说明：必须先写目标再切页 —— PageChange 会触发
+            // PageDownloadLeft.Refresh 与 PageCompControls_Inited，
+            // 两者都要读这个目标来决定是否按服务端过滤。反过来设就全丢了。
+            PageComp.targetServerContent = target;
+            PageComp.targetVersion = null;
             ModMain.frmMain.PageChange(FormMain.PageType.Download,
                 target.CompType == ModComp.CompType.Plugin
                     ? FormMain.PageSubType.DownloadPlugin
                     : FormMain.PageSubType.DownloadMod);
-            PageComp.targetServerContent = target;
-            PageComp.targetVersion = null;
             return;
         }
 
