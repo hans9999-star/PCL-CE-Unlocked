@@ -2087,6 +2087,12 @@ public static class ModComp
         /// <summary>
         ///     获取对应的 Modrinth API 请求链接。若返回 Nothing 则为不进行 Modrinth 请求。
         /// </summary>
+        /// <summary>
+        ///     分支说明：服务端内容管理专用。为真时只返回在服务端可用的资源
+        ///     （Modrinth 的 server_side 为 required 或 optional）。
+        /// </summary>
+        public bool serverOnly;
+
         public string GetModrinthAddress()
         {
             if (!source.HasFlag(CompSourceType.Modrinth))
@@ -2139,6 +2145,11 @@ public static class ModComp
             // facets=[["categories:'game-mechanics'"],["categories:'forge'"],["versions:1.19.3"],["project_type:mod"]]
             var facets = new List<string>();
             facets.Add($"[\"project_type:{ModBase.GetStringFromEnum(type).ToLower()}\"]");
+            // 分支说明：服务端内容管理下只保留服务端可用的 mod，
+            // 避免光影增强、HUD 这类纯客户端 mod 混进服务端列表。
+            // required + optional 都保留，以免漏掉「服务端可选、装了才生效」的 mod。
+            if (serverOnly && type == CompType.Mod)
+                facets.Add("[\"server_side:required\",\"server_side:optional\"]");
             if (!string.IsNullOrEmpty(tag))
                 facets.Add($"[\"categories:'{tag.AfterLast("/")}'\"]");
             if (modLoader != CompLoaderType.Any)
