@@ -918,6 +918,7 @@
     <sys:String x:Key="Instance.Left.InitializeSettings.ConfirmTitle">Initialise confirmation</sys:String>
     <sys:String x:Key="Instance.Left.Install">Modify</sys:String>
     <sys:String x:Key="Instance.Left.Mod">Mods</sys:String>
+    <sys:String x:Key="Instance.Left.Plugins">Plugins</sys:String>
     <sys:String x:Key="Instance.Left.Overview">Overview</sys:String>
     <sys:String x:Key="Instance.Left.Refreshing">Refreshing...</sys:String>
     <sys:String x:Key="Instance.Left.ResourcePacks">Resource packs</sys:String>
