@@ -779,6 +779,12 @@ public partial class PageLinkMain
     /// <summary>版本列表是否已加载过。</summary>
     private bool _serverVersionsLoaded;
 
+    /// <summary>切换实例时暂存要选中的版本号（版本列表是异步加载的）。</summary>
+    private string? _pendingVersion;
+
+    /// <summary>抑制「类型」下拉的程序化变更，避免与实例切换互相触发。</summary>
+    private bool _suppressTypeChanged;
+
     /// <summary>当前选择的服务端类型。</summary>
     private ServerSoftware SelectedSoftware => ComboServerType.SelectedIndex switch
     {
@@ -873,6 +879,22 @@ public partial class PageLinkMain
     /// </summary>
     private async Task EnsureServerVersionsAsync(bool forceReload = false)
     {
+        if (ComboServerInstance.Items.Count == 0)
+        {
+            // 分支说明：与启动页一致的实例选择，选中后用来快速填好类型与版本。
+            foreach (var inst in ModServerContent.GetInstances())
+                ComboServerInstance.Items.Add(new MyComboBoxItem { Content = inst.Name, Tag = inst });
+
+            if (ComboServerInstance.Items.Count > 0)
+            {
+                // 默认选中当前实例；没有则退回第一个
+                var current = PageInstanceLeft.McInstance ?? ModInstanceList.McMcInstanceSelected;
+                var match = current is null ? null : ComboServerInstance.Items.OfType<MyComboBoxItem>()
+                    .FirstOrDefault(i => ReferenceEquals(i.Tag, current));
+                ComboServerInstance.SelectedItem = match ?? ComboServerInstance.Items[0];
+            }
+        }
+
         if (ComboServerType.Items.Count == 0)
         {
             ComboServerType.Items.Add(new MyComboBoxItem
@@ -906,13 +928,64 @@ public partial class PageLinkMain
         foreach (var v in list)
             ComboServerVersion.Items.Add(new MyComboBoxItem
                 { Content = FormatVersionItem(software, v), Tag = v });
-        ComboServerVersion.SelectedIndex = 0;
+
+        // 若来自实例切换，尽量选中该实例对应的版本
+        var picked = 0;
+        if (!string.IsNullOrWhiteSpace(_pendingVersion))
+        {
+            for (var i = 0; i < ComboServerVersion.Items.Count; i++)
+            {
+                var item = ComboServerVersion.Items[i] as MyComboBoxItem;
+                var value = item?.Tag?.ToString() ?? "";
+                if (value == _pendingVersion || value.StartsWith(_pendingVersion + "|", StringComparison.Ordinal))
+                {
+                    picked = i;
+                    break;
+                }
+            }
+
+            _pendingVersion = null;
+        }
+
+        ComboServerVersion.SelectedIndex = picked;
         RefreshServerHostStatus();
     }
 
     private async void ComboServerType_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (!IsLoaded || _suppressTypeChanged) return;
+        await EnsureServerVersionsAsync(forceReload: true).ConfigureAwait(true);
+    }
+
+    /// <summary>
+    ///     切换「实例」：按其加载器与 MC 版本自动填好类型与版本（仍可手动改）。
+    /// </summary>
+    private async void ComboServerInstance_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
         if (!IsLoaded) return;
+        if (ComboServerInstance.SelectedItem is not MyComboBoxItem { Tag: McInstance instance }) return;
+
+        var software = instance.Info?.HasNeoForge == true
+            ? ServerSoftware.NeoForge
+            : instance.Info?.HasForge == true || instance.Info?.HasCleanroom == true
+                ? ServerSoftware.Forge
+                : instance.Info?.HasFabric == true
+                    ? ServerSoftware.Fabric
+                    : ServerSoftware.Vanilla;
+        _pendingVersion = instance.Info?.VanillaName;
+
+        // 直接改索引会再触发一次类型变更事件，这里抑制掉，避免重复拉取版本列表
+        _suppressTypeChanged = true;
+        ComboServerType.SelectedIndex = software switch
+        {
+            ServerSoftware.Paper => 1,
+            ServerSoftware.Fabric => 2,
+            ServerSoftware.Forge => 3,
+            ServerSoftware.NeoForge => 4,
+            _ => 0
+        };
+        _suppressTypeChanged = false;
+
         await EnsureServerVersionsAsync(forceReload: true).ConfigureAwait(true);
     }
 
