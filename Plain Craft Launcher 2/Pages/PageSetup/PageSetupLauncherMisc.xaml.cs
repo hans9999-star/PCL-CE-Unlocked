@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -53,6 +53,13 @@ public partial class PageSetupLauncherMisc
 
         // 网络
         TextSystemHttpProxy.Text = Config.Network.HttpProxy.CustomAddress;
+        // AI 崩溃日志分析配置
+        if (TextAiEndpoint is not null)
+        {
+            TextAiEndpoint.Text = Config.Preference.Ai.Endpoint;
+            TextAiModel.Text = Config.Preference.Ai.Model;
+            TextAiApiKey.Text = Config.Preference.Ai.ApiKey;
+        }
         TextSystemHttpProxyCustomUsername.Text = Config.Network.HttpProxy.CustomUsername;
         TextSystemHttpProxyCustomPassword.Text = Config.Network.HttpProxy.CustomPassword;
         ((MyRadioBox)FindName($"RadioHttpProxyType{Config.Network.HttpProxy.Type}")).SetChecked(true, false);
@@ -117,6 +124,36 @@ public partial class PageSetupLauncherMisc
         var sender = (MySlider)senderRaw;
         if (!ModAnimation.AniExitsAnyControl())
             SetByTag(sender.Tag?.ToString(), sender.Value);
+    }
+
+    /// <summary>AI 配置输入框改变时即时保存。</summary>
+    private void TextAi_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is not MyTextBox box) return;
+        SetByTag(box.Tag?.ToString(), box.Text);
+    }
+
+    /// <summary>测试 AI 端点连通性。</summary>
+    private async void BtnAiTest_Click(object sender, MouseButtonEventArgs e)
+    {
+        BtnAiTest.IsEnabled = false;
+        var original = BtnAiTest.Text;
+        BtnAiTest.Text = Lang.Text("Setup.Misc.Ai.Testing");
+        try
+        {
+            var (ok, message) = await ModAiLogAnalysis.TestAsync().ConfigureAwait(true);
+            HintService.Hint(message, ok ? HintType.Success : HintType.Error);
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[AI] 测试端点失败", ModBase.LogLevel.Hint);
+            HintService.Hint(Lang.Text("Setup.Misc.Ai.TestFailed", ex.Message), HintType.Error);
+        }
+        finally
+        {
+            BtnAiTest.Text = original;
+            BtnAiTest.IsEnabled = true;
+        }
     }
 
     private static void SetByTag(string tag, object value)
