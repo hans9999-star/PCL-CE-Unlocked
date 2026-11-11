@@ -17,11 +17,22 @@ public partial class PageDownloadLeft : IRefreshable
         Refresh((FormMain.PageSubType)ModBase.Val(((MyIconButton)sender).Tag));
     }
 
+    /// <summary>
+    ///     分支说明：插件是服务端专用的分类。只在服务端插件管理（目标为插件）时
+    ///     才显示下载侧栏入口，平时隐藏。
+    /// </summary>
+    public void RefreshPluginEntryVisibility()
+    {
+        var show = ModServerContent.ActiveTarget?.CompType == ModComp.CompType.Plugin;
+        ItemPlugin.Visibility = show ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+    }
+
     public void Refresh(FormMain.PageSubType subType)
     {
         // 分支说明：离开服务端插件下载页即清掉服务端目标，避免污染普通下载
         if (subType != FormMain.PageSubType.DownloadPlugin)
             ModServerContent.ActiveTarget = null;
+        RefreshPluginEntryVisibility();
 
         switch (subType)
         {
@@ -69,6 +80,7 @@ public partial class PageDownloadLeft : IRefreshable
                     ModMain.frmDownloadPlugin.PageLoaderRestart();
                 }
 
+                ItemPlugin.Checked = true;
                 break;
             }
             case FormMain.PageSubType.DownloadPack:
@@ -256,6 +268,7 @@ public partial class PageDownloadLeft : IRefreshable
 
     public object PageGet(FormMain.PageSubType id)
     {
+        RefreshPluginEntryVisibility();
         if (id == default)
             id = pageID;
         switch (id)
