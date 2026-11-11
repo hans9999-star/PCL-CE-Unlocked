@@ -692,6 +692,7 @@
     <sys:String x:Key="Download.Left.LiteLoader">LiteLoader</sys:String>
     <sys:String x:Key="Download.Left.Minecraft">Minecraft</sys:String>
     <sys:String x:Key="Download.Left.Mod">Mods</sys:String>
+    <sys:String x:Key="Download.Left.Plugin">Plugins</sys:String>
     <sys:String x:Key="Download.Left.Modpack">Modpacks</sys:String>
     <sys:String x:Key="Download.Left.NeoForge">NeoForge</sys:String>
     <sys:String x:Key="Download.Left.Optifine">OptiFine</sys:String>
