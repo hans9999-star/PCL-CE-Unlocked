@@ -827,7 +827,9 @@ public partial class FormMain
             if (pageCurrent == PageType.InstanceSetup && PageCurrentSub == PageSubType.VersionMod)
             {
                 // Mod 管理自动刷新
-                ModMain.frmInstanceMod.ReloadCompFileList();
+                // 分支说明：服务端插件管理复用同一个子页，此时实例是 frmInstancePlugin，
+                // frmInstanceMod 可能从未创建，故必须判空而不是直接解引用。
+                (ModMain.frmInstanceMod ?? ModMain.frmInstancePlugin)?.ReloadCompFileList();
             }
             else if (pageCurrent == PageType.InstanceSetup && PageCurrentSub == PageSubType.VersionResourcePack)
             {
