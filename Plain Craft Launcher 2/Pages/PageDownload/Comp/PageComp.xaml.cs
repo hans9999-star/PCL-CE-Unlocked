@@ -386,7 +386,8 @@ public partial class PageComp
                 ? ModBase.Val(((MyComboBoxItem)ComboSearchLoader.SelectedItem).Tag)
                 : (double)ModComp.CompLoaderType.Any);
         request.source = (ModComp.CompSourceType)ModBase.Val(((MyComboBoxItem)ComboSearchSource.SelectedItem).Tag);
-        request.serverOnly = pageIsServerContent;
+        // 双保险：任一路径能证明这是服务端内容即可
+        request.serverOnly = pageIsServerContent || ModServerContent.ActiveTarget is not null;
         // 分支说明：CurseForge 的搜索接口没有资源类型过滤（只用 sortField），
         // 插件模式下会把客户端 mod 当成插件返回，所以插件只走 Modrinth。
         if (PageType == ModComp.CompType.Plugin)
