@@ -59,6 +59,12 @@ public static class ModServerContent
         var list = new List<McInstance>();
         try
         {
+            // 分支说明：与启动页一致，必须先确保实例列表加载器跑过再读，
+            // 否则 mcInstanceList 可能是空的（这正是实例下拉为空的原因）。
+            if (ModInstanceList.mcInstanceListLoader.State != ModBase.LoadState.Finished)
+                ModLoader.LoaderFolderRun(ModInstanceList.mcInstanceListLoader, ModFolder.mcFolderSelected,
+                    ModLoader.LoaderFolderRunType.ForceRun, 1, @"versions\", true);
+
             foreach (var pair in ModInstanceList.mcInstanceList)
                 if (pair.Value is not null)
                     list.AddRange(pair.Value.Where(i => i is not null));
