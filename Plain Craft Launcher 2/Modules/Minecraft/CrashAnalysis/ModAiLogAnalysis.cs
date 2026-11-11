@@ -36,6 +36,12 @@ internal static class ModAiLogAnalysis
 
     private static string ApiKey => Env("PCL_AI_KEY", Config.Preference.Ai.ApiKey);
 
+    /// <summary>
+    ///     是否无条件显示「让 AI 分析」。默认关；可用 PCL_AI_ALWAYS=1 打开，用于验证。
+    /// </summary>
+    public static bool AlwaysShow =>
+        Config.Preference.Ai.AlwaysShow || Env("PCL_AI_ALWAYS", "") == "1";
+
     /// <summary>是否已启用且有可用地址。</summary>
     public static bool IsAvailable =>
         Config.Preference.Ai.Enabled && !string.IsNullOrWhiteSpace(Endpoint);
