@@ -58,7 +58,7 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
 
         // 分支说明：原先只在「内置分析没结论」时才给这个按钮，现已按用户要求取消该限制，
         // 只要 AI 分析可用就始终显示，由用户自己决定要不要再问一次。
-        if (ModAiLogAnalysis.IsAvailable)
+        if (ModAiLogAnalysis.IsAvailable && !string.IsNullOrWhiteSpace(ModAiLogAnalysis.CurrentModel))
             buttons.Add(new MsgBoxButtonInfo(Lang.Text("Crash.Dialog.Button.AiAnalyze"), 4,
                 () => _ = _AnalyzeWithAiAsync()));
 
