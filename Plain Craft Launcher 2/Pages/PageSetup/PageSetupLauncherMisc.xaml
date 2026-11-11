@@ -198,7 +198,7 @@
                     <TextBlock Text="{DynamicResource Setup.Misc.Ai.Endpoint}" VerticalAlignment="Center"
                                Margin="0,0,10,0" />
                     <local:MyTextBox Grid.Column="1" x:Name="TextAiEndpoint" Tag="AiEndpoint"
-                                     HintText="http://127.0.0.1:8326/v1"
+                                     HintText="https://api.example.com/v1"
                                      TextChanged="TextAi_TextChanged" />
                 </Grid>
 
