@@ -14,7 +14,12 @@ public static class ThemeManager
     /// <summary>
     ///     上次已应用的主题编号，用于跳过重复的顶部栏背景图处理。
     /// </summary>
-    private static int _appliedTitleImageId = int.MinValue;
+    private static string _appliedTitleImageId = "";
+
+    /// <summary>
+    ///     分支说明：主题刷新后触发，供设置页重读自定义主题的滑块值。
+    /// </summary>
+    public static event Action? ToneChanged;
 
     public static bool IsDarkMode => ThemeService.IsDarkMode;
 
@@ -52,6 +57,7 @@ public static class ThemeManager
             // 窗口加载动画结束前跳过右键菜单遍历（递归整个视觉树，控件越多越慢）
             if (main.IsWindowLoadFinished)
                 RefreshAllContextMenuThemes();
+            ToneChanged?.Invoke();
         });
     }
 
@@ -71,9 +77,33 @@ public static class ThemeManager
         var theme = ThemeService.CurrentTheme;
         var id = (int)theme;
 
-        // 主题没变就不重复解析图片资源（启动阶段会被调用多次）
-        if (_appliedTitleImageId == id) return;
-        _appliedTitleImageId = id;
+        // 分支说明：自定义标题图优先。缓存键必须能反映「路径变了」，
+        // 所以从 int 主题号改成字符串键，否则换图后不会刷新。
+        var custom = Config.Preference.Theme.CustomTitleImage;
+        var cacheKey = !string.IsNullOrWhiteSpace(custom) && System.IO.File.Exists(custom)
+            ? "custom:" + custom
+            : "builtin:" + id;
+
+        // 没变就不重复解析图片资源（启动阶段会被调用多次）
+        if (_appliedTitleImageId == cacheKey) return;
+        _appliedTitleImageId = cacheKey;
+
+        if (cacheKey.StartsWith("custom:", StringComparison.Ordinal))
+        {
+            try
+            {
+                // ImgTitle.Source 是字符串（pack URI 或文件路径），由 MyImage 内部解析
+                main.ImgTitle.Source = custom!;
+                main.ImgTitle.Opacity = 1d;
+            }
+            catch (Exception ex)
+            {
+                ModBase.Log(ex, $"[Theme] 加载自定义标题图失败：{custom}");
+                main.ImgTitle.Source = null;
+            }
+
+            return;
+        }
 
         if (id >= 5 && theme != ColorTheme.Custom)
         {
@@ -107,6 +137,29 @@ public static class ThemeManager
     /// </summary>
     private static void RefreshBackground()
     {
+        // 分支说明：自定义背景图优先于渐变与纯色。加载失败则回落到原逻辑。
+        var customBg = Config.Preference.Theme.CustomBackgroundImage;
+        if (!string.IsNullOrWhiteSpace(customBg) && System.IO.File.Exists(customBg))
+        {
+            try
+            {
+                var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(customBg, UriKind.Absolute);
+                bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+                bitmap.Freeze();
+                var imageBrush = new ImageBrush(bitmap) { Stretch = Stretch.UniformToFill };
+                imageBrush.Freeze();
+                ModMain.frmMain.PanForm.Background = imageBrush;
+                return;
+            }
+            catch (Exception ex)
+            {
+                ModBase.Log(ex, $"[Theme] 加载自定义背景图失败：{customBg}");
+            }
+        }
+
         if (Config.Preference.Background.BackgroundColorful)
         {
             var brush = new LinearGradientBrush
