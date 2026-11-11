@@ -71,8 +71,10 @@ public partial class Application
             if (Config.Preference.ShowStartupLogo)
             {
                 // 分支说明：SplashScreen 是位图启动画面，不解析 ICO 容器的多尺寸，只会取其中一帧
-                // （实际取到 16x16），放大后很糊。改用 256x256 的 icon.png。
-                ModMain.frmStart = new SplashScreen(@"Images\icon.png");
+                // （实际取到 16x16），放大后很糊。
+                // 但直接用 256x256 的 icon.png 会被按原尺寸铺满闪屏，又太大；
+                // 所以另存一张 64x64 的 splash.png 专供启动画面。
+                ModMain.frmStart = new SplashScreen(@"Images\splash.png");
                 ModMain.frmStart.Show(false, true);
             }
 
