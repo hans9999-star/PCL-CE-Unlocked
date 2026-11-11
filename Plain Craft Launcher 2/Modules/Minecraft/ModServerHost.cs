@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -8,6 +9,16 @@ using PCL.Core.Minecraft;
 using PCL.Core.Utils;
 
 namespace PCL;
+
+/// <summary>已创建的服务端。</summary>
+public sealed class ServerEntry
+{
+    public required ServerSoftware Software { get; init; }
+    public required string Version { get; init; }
+    public required string Dir { get; init; }
+    public required string Display { get; init; }
+    public required bool Installed { get; init; }
+}
 
 /// <summary>服务端类型。</summary>
 public enum ServerSoftware
@@ -91,6 +102,124 @@ public static class ModServerHost
         // Forge 版本串形如 "1.21.1|52.1.20"，竖线不能做目录名
         var safe = version.Replace('|', '-');
         return Path.Combine(ModBase.exePath, "PCL", "Server", $"{name}-{safe}");
+    }
+
+    /// <summary>服务端标记文件名：记录该目录属于哪种类型/版本，便于枚举时准确还原。</summary>
+    private const string ServerMarkFile = "pcl-server.json";
+
+    /// <summary>写入服务端标记（每次开服都会刷新）。</summary>
+    public static void WriteServerMark(string serverDir, ServerSoftware software, string version)
+    {
+        try
+        {
+            File.WriteAllText(Path.Combine(serverDir, ServerMarkFile),
+                new JsonObject { ["software"] = software.ToString(), ["version"] = version }.ToJsonString(),
+                Encoding.UTF8);
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerHost] 写入服务端标记失败", ModBase.LogLevel.Developer);
+        }
+    }
+
+    /// <summary>
+    ///     枚举本机已创建的服务端（扫描服务端根目录），供开服页做「服务端选择」。
+    /// </summary>
+    public static List<ServerEntry> GetCreatedServers()
+    {
+        var list = new List<ServerEntry>();
+        try
+        {
+            var root = Path.Combine(ModBase.exePath, "PCL", "Server");
+            if (!Directory.Exists(root)) return list;
+
+            foreach (var dir in Directory.EnumerateDirectories(root))
+            {
+                var folder = Path.GetFileName(dir);
+                ServerSoftware software;
+                string version;
+
+                var mark = Path.Combine(dir, ServerMarkFile);
+                if (File.Exists(mark))
+                {
+                    try
+                    {
+                        if (JsonNode.Parse(File.ReadAllText(mark, Encoding.UTF8)) is not JsonObject obj) continue;
+                        if (!Enum.TryParse(obj["software"]?.ToString(), out software)) continue;
+                        version = obj["version"]?.ToString() ?? "";
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    // 兜底：旧目录没有标记文件，从目录名反解
+                    var m = Regex.Match(folder, @"^(Vanilla|Paper|Fabric|Forge|NeoForge)-(.+)$");
+                    if (!m.Success || !Enum.TryParse(m.Groups[1].Value, out software)) continue;
+                    version = m.Groups[2].Value;
+                    if (software == ServerSoftware.Forge)
+                    {
+                        // 目录里竖线被替换成了短横，Forge 需要还原成 "mc|loader"
+                        var fm = Regex.Match(version, @"^(.+)-(\d+\.\d+\.\d+.*)$");
+                        if (fm.Success) version = fm.Groups[1].Value + "|" + fm.Groups[2].Value;
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(version)) continue;
+
+                var installed = software is ServerSoftware.Forge or ServerSoftware.NeoForge
+                    ? FindArgsFile(dir) is not null
+                    : File.Exists(GetJarPath(software, version));
+
+                list.Add(new ServerEntry
+                {
+                    Software = software,
+                    Version = version,
+                    Dir = dir,
+                    Display = DescribeServer(software, version),
+                    Installed = installed
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerHost] 枚举服务端失败", ModBase.LogLevel.Hint);
+        }
+
+        list.Sort((a, b) => string.Compare(a.Display, b.Display, StringComparison.OrdinalIgnoreCase));
+        return list;
+    }
+
+    /// <summary>服务端的显示名，如「1.21.1 · Fabric」。</summary>
+    public static string DescribeServer(ServerSoftware software, string version)
+    {
+        var name = software switch
+        {
+            ServerSoftware.Paper => "Paper",
+            ServerSoftware.Fabric => "Fabric",
+            ServerSoftware.Forge => "Forge",
+            ServerSoftware.NeoForge => "NeoForge",
+            _ => "Vanilla"
+        };
+
+        if (software == ServerSoftware.Forge)
+        {
+            var p = version.Split('|');
+            if (p.Length == 2) return $"{p[0]} · Forge {p[1]}";
+        }
+
+        if (software == ServerSoftware.NeoForge)
+        {
+            var p = version.Split('.');
+            if (p.Length >= 2 && int.TryParse(p[0], out var major) && int.TryParse(p[1], out var minor))
+                return major >= 26
+                    ? $"{major}.{minor} · NeoForge {version}"
+                    : $"1.{major}.{minor} · NeoForge {version}";
+        }
+
+        return $"{version} · {name}";
     }
 
     /// <summary>服务端 jar 路径。</summary>
