@@ -225,6 +225,12 @@ public partial class PageComp
 
     private bool isLoaderInited;
 
+    /// <summary>
+    ///     分支说明：本页当前是否在为服务端内容管理服务。用于给搜索加上
+    ///     「服务端可用」过滤，避免客户端专用 mod 出现在服务端列表里。
+    /// </summary>
+    public bool pageIsServerContent;
+
     public PageComp()
     {
         loader = new ModLoader.LoaderTask<ModComp.CompProjectRequest, int>(Lang.Text("Download.Comp.List.Source.ResourceFetch", "XXX"), ModComp.CompProjectsGet,
@@ -251,6 +257,7 @@ public partial class PageComp
             var target = targetServerContent;
             targetServerContent = null;
             targetVersion = null;
+            pageIsServerContent = true;
             ResetFilter();
             TextSearchVersion.Text = target.VanillaName;
 
@@ -279,6 +286,7 @@ public partial class PageComp
         else if (targetVersion is not null)
         {
             // 设置目标
+            pageIsServerContent = false;
             ResetFilter(); // 重置筛选器
             TextSearchVersion.Text = targetVersion.Info.VanillaName;
 
@@ -378,6 +386,7 @@ public partial class PageComp
                 ? ModBase.Val(((MyComboBoxItem)ComboSearchLoader.SelectedItem).Tag)
                 : (double)ModComp.CompLoaderType.Any);
         request.source = (ModComp.CompSourceType)ModBase.Val(((MyComboBoxItem)ComboSearchSource.SelectedItem).Tag);
+        request.serverOnly = pageIsServerContent;
         // 分支说明：CurseForge 的搜索接口没有资源类型过滤（只用 sortField），
         // 插件模式下会把客户端 mod 当成插件返回，所以插件只走 Modrinth。
         if (PageType == ModComp.CompType.Plugin)
