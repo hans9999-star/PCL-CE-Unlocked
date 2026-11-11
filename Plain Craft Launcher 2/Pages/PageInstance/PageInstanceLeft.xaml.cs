@@ -101,8 +101,20 @@ public partial class PageInstanceLeft : IRefreshable
         Refresh((FormMain.PageSubType)ModBase.Val(((MyIconButton)sender).Tag));
     }
 
+    /// <summary>
+    ///     分支说明：插件是服务端专用的分类。只在服务端内容管理（目标为插件）时
+    ///     才显示侧栏入口，平时隐藏，避免客户端实例多出一个没有意义的入口。
+    /// </summary>
+    public void RefreshPluginEntryVisibility()
+    {
+        var show = ModServerContent.ActiveTarget?.CompType == ModComp.CompType.Plugin;
+        ItemPlugin.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     public void Refresh(FormMain.PageSubType subType)
     {
+        RefreshPluginEntryVisibility();
+
         switch (subType)
         {
             case FormMain.PageSubType.VersionMod:
@@ -209,12 +221,14 @@ public partial class PageInstanceLeft : IRefreshable
                 sub != (int)FormMain.PageSubType.VersionMod &&
                 sub != (int)FormMain.PageSubType.VersionPlugin)
                 ModServerContent.ActiveTarget = null;
+            RefreshPluginEntryVisibility();
             PageChange((FormMain.PageSubType)ModBase.Val(item.Tag));
         }
     }
 
     public object PageGet(FormMain.PageSubType id)
     {
+        RefreshPluginEntryVisibility();
         if ((int)id == -1)
             id = pageID;
         switch (id)
