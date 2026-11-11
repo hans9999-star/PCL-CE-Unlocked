@@ -258,7 +258,25 @@ public static partial class Config
         /// <summary>
         /// 界面主题配置。
         /// </summary>
-        [ConfigGroup("Theme")] partial class ThemeConfigGroup
+        /// <summary>
+///     分支说明：崩溃分析给出不了方案时，可以让 AI 读日志再分析一次。
+///     Endpoint 是 OpenAI 兼容地址（形如 http://127.0.0.1:8326/v1），
+///     实际请求 {Endpoint}/chat/completions。可用环境变量 PCL_AI_ENDPOINT /
+///     PCL_AI_MODEL / PCL_AI_KEY 覆盖，免去改配置文件。
+/// </summary>
+[ConfigGroup("Ai")] partial class AiConfigGroup
+{
+    [ConfigItem<bool>("AiEnabled", true, ConfigSource.Local)] public partial bool Enabled { get; set; }
+
+    [ConfigItem<string>("AiEndpoint", "http://127.0.0.1:8326/v1", ConfigSource.Local)] public partial string Endpoint { get; set; }
+
+    [ConfigItem<string>("AiModel", "gpt-3.5-turbo", ConfigSource.Local)] public partial string Model { get; set; }
+
+    [ConfigItem<string>("AiApiKey", "", ConfigSource.Local)] public partial string ApiKey { get; set; }
+
+    [ConfigItem<int>("AiTimeoutSeconds", 120, ConfigSource.Local)] public partial int TimeoutSeconds { get; set; }
+}
+[ConfigGroup("Theme")] partial class ThemeConfigGroup
         {
             /// <summary>
             /// 配色主题模式。
