@@ -22,6 +22,8 @@
                             <RowDefinition Height="28" />
                             <RowDefinition Height="7" />
                             <RowDefinition Height="28" />
+                            <RowDefinition Height="10" />
+                        <RowDefinition Height="28" />
                         </Grid.RowDefinitions>
                         <TextBlock Text="{DynamicResource Setup.Update.Channel.Title}" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left"
                                    Margin="0,0,25,0" />
@@ -54,6 +56,16 @@
                                      PasswordChanged="TextMirrorCDK_PasswordChanged" />
                         <local:MyButton x:Name="BtnGetMirrorCDK" Text="{DynamicResource Setup.Update.MirrorChyanCdk.Get}" Grid.Column="3" Grid.Row="4"
                                         ColorType="Highlight" Click="BtnGetMirrorCDK_Click" />
+                        <TextBlock Text="{DynamicResource Setup.Update.GitHubProxy.Label}" Grid.Row="5" VerticalAlignment="Center"
+                                   HorizontalAlignment="Left" Margin="0,10,25,0" />
+                        <local:MyTextBox x:Name="TextGitHubProxy" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"
+                                         Margin="0,10,0,0"
+                                         HintText="{DynamicResource Setup.Update.GitHubProxy.Hint}"
+                                         ToolTip="{DynamicResource Setup.Update.GitHubProxy.ToolTip}"
+                                         TextChanged="TextGitHubProxy_TextChanged" />
+                        <local:MyButton x:Name="BtnGitHubProxyTest" Text="{DynamicResource Setup.Update.GitHubProxy.Test}"
+                                        Grid.Column="3" Grid.Row="5" Margin="0,10,0,0"
+                                        Click="BtnGitHubProxyTest_Click" />
                     </Grid>
                 </StackPanel>
             </local:MyCard>
