@@ -1,4 +1,7 @@
 using System.Globalization;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using System.IO;
 using PCL.Core.App;
 using PCL.Core.App.Localization;
@@ -52,7 +55,9 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
             new(thirdButtonText, 3)
         };
 
-        if ((!_HasSolution() || ModAiLogAnalysis.AlwaysShow) && ModAiLogAnalysis.IsAvailable)
+        // 分支说明：原先只在「内置分析没结论」时才给这个按钮，现已按用户要求取消该限制，
+        // 只要 AI 分析可用就始终显示，由用户自己决定要不要再问一次。
+        if (ModAiLogAnalysis.IsAvailable)
             buttons.Add(new MsgBoxButtonInfo(Lang.Text("Crash.Dialog.Button.AiAnalyze"), 4,
                 () => _ = _AnalyzeWithAiAsync()));
 
@@ -78,32 +83,96 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
         }
     }
 
-    /// <summary>内置分析是否给出了结论。没有结论时才提议让 AI 再看一遍。</summary>
-    private bool _HasSolution() => context.Result?.HasFinding == true;
 
     /// <summary>把日志交给 AI 分析，并把结果弹出来。</summary>
     /// <summary>把日志交给 AI 分析，并把结果弹出来。</summary>
+    /// <summary>把日志交给 AI 分析，期间显示进度窗，完成后弹出结果。</summary>
     private async Task _AnalyzeWithAiAsync(bool retried = false)
     {
         try
         {
-            // 分支说明：Hint 是几秒就消失的提示，而请求最长要等超时时间（默认 120s）。
-            // 只闪一下就没了，用户会以为界面卡住。这里等待期间每 3 秒重刷一次提示，
-            // 关键步骤另有日志输出，保证过程可见。
-            using var hintCts = new CancellationTokenSource();
-            var hintTask = _KeepAnalyzingHintAsync(hintCts.Token);
+            var log = context.LogAll;
+            if (string.IsNullOrWhiteSpace(log)) log = context.PreparedLogs?.All ?? "";
+
+            // 分支说明：请求最长要等超时时间（默认 120s），光靠几秒就消失的 toast
+            // 看不出是在跑还是卡死，所以给一个真正的进度窗：不确定进度条 + 已等待秒数 + 取消。
+            using var cts = new CancellationTokenSource();
+            var status = new TextBlock
+            {
+                Text = Lang.Text("Crash.Ai.Analyzing"),
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = (Brush)System.Windows.Application.Current.Resources["ColorBrushGray1"],
+                Margin = new Thickness(0, 0, 0, 12)
+            };
+            var cancelButton = new MyButton
+            {
+                Text = Lang.Text("Common.Action.Cancel"),
+                Padding = new Thickness(12, 4, 12, 4),
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            cancelButton.Click += (_, _) => cts.Cancel();
+
+            var panel = new StackPanel { Margin = new Thickness(18) };
+            panel.Children.Add(status);
+            panel.Children.Add(new ProgressBar
+            {
+                IsIndeterminate = true,
+                Height = 6,
+                Margin = new Thickness(0, 0, 0, 14),
+                Foreground = (Brush)System.Windows.Application.Current.Resources["ColorBrush3"]
+            });
+            panel.Children.Add(cancelButton);
+
+            var window = new Window
+            {
+                Title = Lang.Text("Crash.Ai.Title"),
+                Width = 400,
+                Height = 172,
+                ResizeMode = ResizeMode.NoResize,
+                ShowInTaskbar = false,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = ModMain.frmMain,
+                Background = (Brush)System.Windows.Application.Current.Resources["ColorBrushBackground"],
+                Content = panel
+            };
+            window.Show();
+
+            // 计时刷新「已等待 N 秒」，让等待过程可见
+            var startedAt = DateTime.Now;
+            var ticker = Task.Run(async () =>
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await Task.Delay(500, cts.Token).ConfigureAwait(false);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        return;
+                    }
+
+                    var seconds = (int)(DateTime.Now - startedAt).TotalSeconds;
+                    ModBase.RunInUi(() =>
+                    {
+                        if (window.IsVisible) status.Text = Lang.Text("Crash.Ai.Elapsed", seconds);
+                    });
+                }
+            });
 
             string text;
             try
             {
-                var log = context.LogAll;
-                if (string.IsNullOrWhiteSpace(log)) log = context.PreparedLogs?.All ?? "";
-                text = await ModAiLogAnalysis.AnalyzeAsync(log).ConfigureAwait(false);
+                text = await ModAiLogAnalysis.AnalyzeAsync(log, cts.Token).ConfigureAwait(false);
             }
             finally
             {
-                hintCts.Cancel();
-                await hintTask.ConfigureAwait(false);
+                cts.Cancel();
+                await ticker.ConfigureAwait(false);
+                ModBase.RunInUi(() =>
+                {
+                    if (window.IsVisible) window.Close();
+                });
             }
 
             if (string.IsNullOrWhiteSpace(text))
@@ -117,6 +186,12 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
         }
         catch (Exception ex)
         {
+            if (ex is OperationCanceledException)
+            {
+                LogWrapper.Info("Crash", "AI 分析被用户取消");
+                return;
+            }
+
             LogWrapper.Error(ex, "Crash", "AI 分析崩溃日志失败");
 
             // 401 = 缺 API Key；提到 model 的 400 = 模型名不被接受
@@ -142,23 +217,6 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
                 Lang.Text("Crash.Ai.Title"), MsgBoxTheme.Error);
         }
     }
-
-    private static async Task _KeepAnalyzingHintAsync(CancellationToken token)
-    {
-        while (!token.IsCancellationRequested)
-        {
-            HintWrapper.Show(Lang.Text("Crash.Ai.Analyzing"), HintTheme.Info);
-            try
-            {
-                await Task.Delay(3000, token).ConfigureAwait(false);
-            }
-            catch (TaskCanceledException)
-            {
-                return;
-            }
-        }
-    }
-
 
     private static string _GetSecondButtonText(
         bool isHandAnalyze,
