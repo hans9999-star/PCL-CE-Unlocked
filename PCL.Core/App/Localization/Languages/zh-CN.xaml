@@ -1852,7 +1852,7 @@
     <sys:String x:Key="Link.Lobby.JoinFailed">加入大厅失败，可能是大厅不存在或已被解散</sys:String>
     <sys:String x:Key="Link.Lobby.LoginRequired">请先登录 Natayark ID 再使用大厅！</sys:String>
     <sys:String x:Key="Link.Lobby.MotdDesc"> - {0}</sys:String>
-    <sys:String x:Key="Link.Lobby.MotdFormat">PCL CE 大厅{0}</sys:String>
+    <sys:String x:Key="Link.Lobby.MotdFormat">PCL Unbound 大厅{0}</sys:String>
     <sys:String x:Key="Link.Lobby.UnsupportedType">不支持的大厅类型: {0}</sys:String>
     <sys:String x:Key="Link.Lobby.WorldNameFormat">{0} / {1} ({2})</sys:String>
 
@@ -3343,6 +3343,15 @@
     <sys:String x:Key="Setup.Update.Latest">已是最新版本</sys:String>
     <sys:String x:Key="Setup.Update.MirrorChyanCdk.Get">获取 CDK</sys:String>
     <sys:String x:Key="Setup.Update.MirrorChyanCdk.Label">Mirror 酱 CDK</sys:String>
+    <sys:String x:Key="Setup.Update.GitHubProxy.Label">加速源</sys:String>
+    <sys:String x:Key="Setup.Update.GitHubProxy.Hint">留空则直连 GitHub</sys:String>
+    <sys:String x:Key="Setup.Update.GitHubProxy.ToolTip">中国大陆直连 GitHub 常超时。可填一个加速前缀（如 https://gh-proxy.com/），它会拼在原始地址前面，同时用于检查更新和下载更新包。</sys:String>
+    <sys:String x:Key="Setup.Update.GitHubProxy.Test">测试</sys:String>
+    <sys:String x:Key="Setup.Update.GitHubProxy.Testing">测试中…</sys:String>
+    <sys:String x:Key="Setup.Update.GitHubProxy.TestOk">连接成功（{0}）</sys:String>
+    <sys:String x:Key="Setup.Update.GitHubProxy.TestFailed">连接失败：{0}</sys:String>
+    <sys:String x:Key="Setup.Update.GitHubProxy.TestInvalid">地址必须以 http:// 或 https:// 开头</sys:String>
+    <sys:String x:Key="Setup.Update.GitHubProxy.Direct">直连</sys:String>
     <sys:String x:Key="Setup.Update.MirrorChyanCdk.ToolTip">Mirror 酱 (mirrorchyan.com) 是一个付费的第三方应用分发平台，用于提供国内有偿高速下载源。&#xA;这是一项可选服务，不填入 CDK 不影响正常使用与更新。&#xA;如果你有 Mirror 酱的 CDK，可以提供给 PCL CE，启动器会优先使用他们的高速下载源下载软件更新，也能缓解社区公益更新服务器的一些压力……</sys:String>
     <sys:String x:Key="Setup.Update.OtherOptions.Placeholder">AquaCL 3 是 PCL CE 的第一个主要更新，带来了让人眼前一亮的新设计，使用了最新开发技术，完全重构了基础体验，并更支持 macOS、Linux 等其他平台。</sys:String>
     <sys:String x:Key="Setup.Update.OtherOptions.Title">其他更新选项 - 升级到 AquaCL</sys:String>
