@@ -181,16 +181,15 @@ public partial class MyMsgText
     {
         if (myConverter.IsExited)
             return;
-        if (myConverter.Button4Action is not null)
-        {
-            myConverter.Button4Action();
-        }
-        else
-        {
-            myConverter.IsExited = true;
-            myConverter.Result = 4;
-            Close();
-        }
+
+        // 分支说明：第四个按钮承载的是「让 AI 分析」这类会接管流程的操作，
+        // 点它就跟点确定一样先把本弹窗关掉，把界面让给后面的进度窗；
+        // 前三个按钮保持原语义（有回调时不关闭）。
+        var action = myConverter.Button4Action;
+        myConverter.IsExited = true;
+        myConverter.Result = 4;
+        Close();
+        action?.Invoke();
     }
 
     private void Drag(object sender, MouseButtonEventArgs e)
