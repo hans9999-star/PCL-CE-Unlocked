@@ -2960,6 +2960,19 @@
     <sys:String x:Key="Setup.Misc.Network.DoH.ToolTip">Using DoH for address resolution can provide better IP results and improve the launcher's network access. If you have deployed a DoH resolution service, you can disable this feature.</sys:String>
     <sys:String x:Key="Setup.Misc.Network.HttpProxy">HTTP proxy</sys:String>
     <sys:String x:Key="Setup.Misc.Network.Title">Network</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Title">AI Crash Log Analysis</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Description">When the built-in crash analysis cannot reach a conclusion, the AI can read the log again. Point it at any OpenAI-compatible endpoint that supports /chat/completions. Leave empty to disable.</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Endpoint">Endpoint</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Model">Model</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.ApiKey">API Key</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.ApiKey.Hint">Leave empty if no auth is needed</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Enabled">Enable AI analysis</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Test">Test connection</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.Testing">Testing...</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestOk">Connected, model {0}</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestUnauthorized">Endpoint reachable, but an API key is required</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestFailed">Connection failed: {0}</sys:String>
+    <sys:String x:Key="Setup.Misc.Ai.TestNotConfigured">Endpoint is empty</sys:String>
 
     <!-- Setup.Misc.Network.Proxy -->
 
