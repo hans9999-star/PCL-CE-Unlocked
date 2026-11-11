@@ -126,6 +126,13 @@ public static partial class Config
         /// 更新分支。
         /// </summary>
         [ConfigItem<UpdateChannel>("SystemUpdateChannel", UpdateChannel.Release, ConfigSource.Local)] public partial UpdateChannel UpdateChannel { get; set; }
+        /// <summary>
+        ///     GitHub 加速源前缀。为空则直连。
+        ///     填形如 https://gh-proxy.com/ 的地址，会拼在完整原始 URL 前面：
+        ///     API -> {前缀}https://api.github.com/...
+        ///     下载 -> {前缀}https://github.com/.../releases/download/...
+        /// </summary>
+        [ConfigItem<string>("SystemGitHubProxy", "", ConfigSource.Local)] public partial string GitHubProxy { get; set; }
             
         /// <summary>
         /// Mirror 酱 CDK。
