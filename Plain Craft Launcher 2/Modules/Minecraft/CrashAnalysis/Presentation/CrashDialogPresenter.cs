@@ -52,7 +52,7 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
             new(thirdButtonText, 3)
         };
 
-        if (!_HasSolution() && ModAiLogAnalysis.IsAvailable)
+        if ((!_HasSolution() || ModAiLogAnalysis.AlwaysShow) && ModAiLogAnalysis.IsAvailable)
             buttons.Add(new MsgBoxButtonInfo(Lang.Text("Crash.Dialog.Button.AiAnalyze"), 4,
                 () => _ = _AnalyzeWithAiAsync()));
 
