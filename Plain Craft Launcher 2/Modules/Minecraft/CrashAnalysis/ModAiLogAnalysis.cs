@@ -34,6 +34,9 @@ internal static class ModAiLogAnalysis
 
     private static string Model => Env("PCL_AI_MODEL", Config.Preference.Ai.Model);
 
+    /// <summary>当前生效的模型名，供界面判断配置是否完整。</summary>
+    public static string CurrentModel => Model;
+
     private static string ApiKey => Env("PCL_AI_KEY", Config.Preference.Ai.ApiKey);
 
     /// <summary>
@@ -53,6 +56,7 @@ internal static class ModAiLogAnalysis
     public static async Task<string> AnalyzeAsync(string logText, CancellationToken token = default)
     {
         if (!IsAvailable) throw new InvalidOperationException("AI 分析未启用或未配置地址");
+        if (string.IsNullOrWhiteSpace(Model)) throw new InvalidOperationException("AI 分析未配置模型");
 
         var log = logText ?? "";
         if (log.Length > MaxLogChars) log = "……（前文已省略）……\n" + log[^MaxLogChars..];
@@ -101,6 +105,8 @@ internal static class ModAiLogAnalysis
     {
         if (!IsAvailable)
             return (false, PCL.Core.App.Localization.Lang.Text("Setup.Misc.Ai.TestNotConfigured"));
+        if (string.IsNullOrWhiteSpace(Model))
+            return (false, PCL.Core.App.Localization.Lang.Text("Setup.Misc.Ai.TestNoModel"));
 
         var url = Endpoint + "/models";
         try
