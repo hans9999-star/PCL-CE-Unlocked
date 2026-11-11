@@ -724,7 +724,185 @@ public partial class PageSetupUI
         var isCustom = Config.Preference.Theme.LightColor == ColorTheme.Custom ||
                        Config.Preference.Theme.DarkColor == ColorTheme.Custom;
         PanCustomTheme.Visibility = isCustom ? Visibility.Visible : Visibility.Collapsed;
+        RefreshThemeList();
     }
+
+    #region 主题与自定义图片
+
+    private static string? PickImage(string title)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = title,
+            Filter = "图片|*.png;*.jpg;*.jpeg;*.bmp;*.gif|所有文件|*.*",
+            CheckFileExists = true
+        };
+        return dlg.ShowDialog() == true ? dlg.FileName : null;
+    }
+
+    /// <summary>选择自定义标题图。</summary>
+    private void BtnCustomTitleImage_Click(object sender, MouseButtonEventArgs e)
+    {
+        var path = PickImage(Lang.Text("Setup.Ui.Theme.Custom.TitleImage"));
+        if (path is null) return;
+        Config.Preference.Theme.CustomTitleImage = path;
+        ThemeManager.ThemeRefresh();
+    }
+
+    private void BtnCustomBackgroundImage_Click(object sender, MouseButtonEventArgs e)
+    {
+        var path = PickImage(Lang.Text("Setup.Ui.Theme.Custom.BackgroundImage"));
+        if (path is null) return;
+        Config.Preference.Theme.CustomBackgroundImage = path;
+        ThemeManager.ThemeRefresh();
+    }
+
+    private void BtnClearTitleImage_Click(object sender, MouseButtonEventArgs e)
+    {
+        Config.Preference.Theme.CustomTitleImage = "";
+        ThemeManager.ThemeRefresh();
+    }
+
+    private void BtnClearBackgroundImage_Click(object sender, MouseButtonEventArgs e)
+    {
+        Config.Preference.Theme.CustomBackgroundImage = "";
+        ThemeManager.ThemeRefresh();
+    }
+
+    /// <summary>把当前设置存成一个主题文件。</summary>
+    private void BtnSaveTheme_Click(object sender, MouseButtonEventArgs e)
+    {
+        var name = Microsoft.VisualBasic.Interaction.InputBox(
+            Lang.Text("Setup.Ui.Theme.NameHint"), Lang.Text("Setup.Ui.Theme.SaveTitle"), "");
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var theme = ModThemeFile.SaveCurrentAsTheme(name,
+            Config.Preference.Theme.CustomTitleImage,
+            Config.Preference.Theme.CustomBackgroundImage);
+        if (theme is null)
+        {
+            HintService.Hint(Lang.Text("Setup.Ui.Theme.SaveFailed"), HintType.Error);
+            return;
+        }
+
+        RefreshThemeList();
+    }
+
+    /// <summary>从 zip 导入主题。</summary>
+    private void BtnImportTheme_Click(object sender, MouseButtonEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = Lang.Text("Setup.Ui.Theme.Import"),
+            Filter = "Zip|*.zip|所有文件|*.*",
+            CheckFileExists = true
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        if (!ModThemeFile.ImportTheme(dlg.FileName))
+            HintService.Hint(Lang.Text("Setup.Ui.Theme.ImportFailed"), HintType.Error);
+        RefreshThemeList();
+    }
+
+    /// <summary>重建主题列表。</summary>
+    public void RefreshThemeList()
+    {
+        if (PanThemeList is null) return;
+        PanThemeList.Children.Clear();
+
+        var themes = ModThemeFile.ListThemes();
+        if (themes.Count == 0)
+        {
+            PanThemeList.Children.Add(new TextBlock
+            {
+                Margin = new Thickness(2, 2, 2, 2),
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = (System.Windows.Media.Brush)FindResource("ColorBrushGray2"),
+                Text = Lang.Text("Setup.Ui.Theme.Empty")
+            });
+            return;
+        }
+
+        foreach (var theme in themes)
+        {
+            var row = new Grid { Margin = new Thickness(2, 3, 2, 3) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var active = Config.Preference.Theme.ActiveTheme == theme.Name;
+            var label = new TextBlock
+            {
+                Text = active ? theme.Name + "  ●" : theme.Name,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Foreground = (System.Windows.Media.Brush)FindResource("ColorBrushGray1")
+            };
+            Grid.SetColumn(label, 0);
+
+            var captured = theme;
+            var apply = new MyButton
+            {
+                Text = Lang.Text("Setup.Ui.Theme.Apply"),
+                ColorType = MyButton.ColorState.Highlight,
+                Padding = new Thickness(10, 3, 10, 3),
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            apply.Click += (_, _) =>
+            {
+                ModThemeFile.ApplyTheme(captured);
+                RefreshThemeList();
+            };
+            Grid.SetColumn(apply, 1);
+
+            var export = new MyButton
+            {
+                Text = Lang.Text("Setup.Ui.Theme.Export"),
+                Padding = new Thickness(10, 3, 10, 3),
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            export.Click += (_, _) => ExportTheme(captured);
+            Grid.SetColumn(export, 2);
+
+            var del = new MyButton
+            {
+                Text = Lang.Text("Setup.Ui.Theme.Delete"),
+                ColorType = MyButton.ColorState.Red,
+                Padding = new Thickness(10, 3, 10, 3),
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            del.Click += (_, _) =>
+            {
+                if (ModMain.MyMsgBox(Lang.Text("Setup.Ui.Theme.ConfirmDelete", captured.Name),
+                        Lang.Text("Setup.Ui.Theme.Delete"), isWarn: true) != 1) return;
+                ModThemeFile.DeleteTheme(captured);
+                RefreshThemeList();
+            };
+            Grid.SetColumn(del, 3);
+
+            row.Children.Add(label);
+            row.Children.Add(apply);
+            row.Children.Add(export);
+            row.Children.Add(del);
+            PanThemeList.Children.Add(row);
+        }
+    }
+
+    private static void ExportTheme(LauncherTheme theme)
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = Lang.Text("Setup.Ui.Theme.ExportTitle"),
+            FileName = theme.Name + ".zip",
+            Filter = "Zip|*.zip"
+        };
+        if (dlg.ShowDialog() != true) return;
+        if (!ModThemeFile.ExportTheme(theme, dlg.FileName))
+            HintService.Hint(Lang.Text("Setup.Ui.Theme.ExportFailed"), HintType.Error);
+    }
+
+    #endregion
 
     /// <summary>
     ///     自定义配色滑块改变。
@@ -734,7 +912,18 @@ public partial class PageSetupUI
         var sender = (MySlider)senderRaw;
         if (ModAnimation.AniExitsAnyControl())
             return;
-        SetByTag(sender.Tag?.ToString(), sender.Value);
+        // 分支说明：亮色与暗色各有一套自定义值，按当前 tone 选择要写入的配置键。
+        // XAML 里的 Tag 仍是旧键名，这里做一次映射，避免改动滑块的 Tag。
+        var tag = sender.Tag?.ToString();
+        var dark = PCL.Core.UI.Theme.ThemeService.IsDarkMode;
+        tag = tag switch
+        {
+            "UiLauncherHue" => dark ? "UiDarkHue" : "UiLightHue",
+            "UiLauncherSat" => dark ? "UiDarkSat" : "UiLightSat",
+            "UiLauncherLight" => dark ? "UiDarkLightness" : "UiLightLightness",
+            _ => tag
+        };
+        SetByTag(tag, sender.Value);
         ThemeManager.ThemeRefresh();
     }
 
