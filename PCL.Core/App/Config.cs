@@ -304,6 +304,51 @@ public static partial class Config
             /// 传说中的主题选择，但是没卵用。
             /// </summary>
             [ConfigItem<int>("UiLauncherTheme", 0, ConfigSource.Local)] public partial int ThemeSelected { get; set; }
+
+    /// <summary>
+    ///     亮色自定义：色相 (H)。
+    /// </summary>
+    [ConfigItem<int>("UiLightHue", 180, ConfigSource.Local)] public partial int LightHue { get; set; }
+
+    /// <summary>
+    ///     亮色自定义：饱和度 (S)，50 为中性。
+    /// </summary>
+    [ConfigItem<int>("UiLightSat", 80, ConfigSource.Local)] public partial int LightSat { get; set; }
+
+    /// <summary>
+    ///     亮色自定义：明度，20 为中性。
+    /// </summary>
+    [ConfigItem<int>("UiLightLightness", 20, ConfigSource.Local)] public partial int LightLightness { get; set; }
+
+    /// <summary>
+    ///     暗色自定义：色相 (H)。
+    /// </summary>
+    [ConfigItem<int>("UiDarkHue", 180, ConfigSource.Local)] public partial int DarkHue { get; set; }
+
+    /// <summary>
+    ///     暗色自定义：饱和度 (S)，50 为中性。
+    /// </summary>
+    [ConfigItem<int>("UiDarkSat", 80, ConfigSource.Local)] public partial int DarkSat { get; set; }
+
+    /// <summary>
+    ///     暗色自定义：明度，20 为中性。
+    /// </summary>
+    [ConfigItem<int>("UiDarkLightness", 20, ConfigSource.Local)] public partial int DarkLightness { get; set; }
+
+    /// <summary>
+    ///     自定义标题图（绝对路径），空表示用内置。
+    /// </summary>
+    [ConfigItem<string>("UiCustomTitleImage", "", ConfigSource.Local)] public partial string CustomTitleImage { get; set; }
+
+    /// <summary>
+    ///     自定义背景图（绝对路径），空表示用渐变/纯色。
+    /// </summary>
+    [ConfigItem<string>("UiCustomBackgroundImage", "", ConfigSource.Local)] public partial string CustomBackgroundImage { get; set; }
+
+    /// <summary>
+    ///     当前套用的主题名（PCL/Theme 下的目录名），空表示未套用。
+    /// </summary>
+    [ConfigItem<string>("UiActiveTheme", "", ConfigSource.Local)] public partial string ActiveTheme { get; set; }
         }
 
         /// <summary>
