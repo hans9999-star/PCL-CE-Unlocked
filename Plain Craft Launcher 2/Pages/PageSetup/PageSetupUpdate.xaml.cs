@@ -22,6 +22,7 @@ public partial class PageSetupUpdate
     {
         ModAnimation.AniBeginControl();
         TextMirrorCDK.Password = Config.Update.MirrorChyanKey;
+        TextGitHubProxy.Text = Config.Update.GitHubProxy ?? "";
 
         ComboSystemUpdateChannel.SelectedIndex = (int)Config.Update.UpdateChannel;
         ComboSystemUpdateMode.SelectedIndex = (int)Config.Update.UpdateMode;
@@ -291,5 +292,34 @@ public partial class PageSetupUpdate
         Available = 1,
         Error = 2,
         Latest = 3
+    }
+    /// <summary>GitHub 加速源输入框改变时即时保存。</summary>
+    private void TextGitHubProxy_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is not MyTextBox box) return;
+        Config.Update.GitHubProxy = box.Text.Trim();
+    }
+
+    /// <summary>测试加速源是否可用：走代理请求仓库的 Releases API。</summary>
+    private async void BtnGitHubProxyTest_Click(object sender, MouseButtonEventArgs e)
+    {
+        BtnGitHubProxyTest.IsEnabled = false;
+        var original = BtnGitHubProxyTest.Text;
+        BtnGitHubProxyTest.Text = Lang.Text("Setup.Update.GitHubProxy.Testing");
+        try
+        {
+            var (ok, message) = await UpdateManager.TestGitHubProxyAsync().ConfigureAwait(true);
+            HintService.Hint(message, ok ? HintType.Success : HintType.Error);
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[Update] 测试 GitHub 加速源失败", ModBase.LogLevel.Hint);
+            HintService.Hint(Lang.Text("Setup.Update.GitHubProxy.TestFailed", ex.Message), HintType.Error);
+        }
+        finally
+        {
+            BtnGitHubProxyTest.Text = original;
+            BtnGitHubProxyTest.IsEnabled = true;
+        }
     }
 }
