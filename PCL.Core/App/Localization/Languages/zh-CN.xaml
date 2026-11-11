@@ -116,6 +116,7 @@
     <sys:String x:Key="Crash.Dialog.Button.AiAnalyze">让 AI 分析</sys:String>
     <sys:String x:Key="Crash.Ai.Title">AI 日志分析</sys:String>
     <sys:String x:Key="Crash.Ai.Analyzing">正在请求 AI 分析日志……</sys:String>
+    <sys:String x:Key="Crash.Ai.Elapsed">正在请求 AI 分析日志……已等待 {0} 秒</sys:String>
     <sys:String x:Key="Crash.Ai.Empty">AI 没有返回任何内容</sys:String>
     <sys:String x:Key="Crash.Ai.Failed">AI 分析失败：{0}</sys:String>
     <sys:String x:Key="Crash.Ai.NeedKey">这个接口需要 API Key，请填写（会保存下来，下次不再问）：</sys:String>
