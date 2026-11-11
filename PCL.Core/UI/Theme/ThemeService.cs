@@ -241,11 +241,15 @@ public sealed partial class ThemeService
     private static (int Hue, double LightAdjust, double ChromaAdjust) _GetCustomThemeArgs()
     {
         var theme = Config.Preference.Theme;
-        var hue = ((theme.WindowHue % 360) + 360) % 360;
+        // 分支说明：亮色与暗色各有一套自定义值，按当前 tone 取对应那套。
+        var hueSource = IsDarkMode ? theme.DarkHue : theme.LightHue;
+        var satSource = IsDarkMode ? theme.DarkSat : theme.LightSat;
+        var lightSource = IsDarkMode ? theme.DarkLightness : theme.LightLightness;
+        var hue = ((hueSource % 360) + 360) % 360;
         // 饱和度 50 为中性，0 完全去色，100 完全饱和
-        var chroma = theme.WindowSat / 50d - 1d;
+        var chroma = satSource / 50d - 1d;
         // 明度 20 为中性
-        var light = (theme.WindowLight - 20) / 20d;
+        var light = (lightSource - 20) / 20d;
         return (hue, Math.Clamp(light, -1d, 1d), Math.Clamp(chroma, -1d, 1d));
     }
 
