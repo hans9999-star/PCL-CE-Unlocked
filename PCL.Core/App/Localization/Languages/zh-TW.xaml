@@ -3375,6 +3375,7 @@
     <sys:String x:Key="Tools.GameLink.Link.ServerHostTitle">本地開服</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostSubtitle">在目前實例上開一個原版伺服器，開好後可以分享給朋友一起玩。</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType">伺服器類型</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostInstance">實例</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostVersion">版本</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Vanilla">原版</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Paper">Paper（插件端）</sys:String>
