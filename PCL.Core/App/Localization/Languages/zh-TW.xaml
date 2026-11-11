@@ -119,6 +119,7 @@
     <sys:String x:Key="Crash.Ai.Empty">AI 沒有回傳任何內容</sys:String>
     <sys:String x:Key="Crash.Ai.Failed">AI 分析失敗：{0}</sys:String>
     <sys:String x:Key="Crash.Ai.NeedKey">這個介面需要 API Key，請填寫（會儲存下來，下次不再問）：</sys:String>
+    <sys:String x:Key="Crash.Ai.NeedModel">這個服務要求模型名用 provider/model 形式（例如 openai/gpt-4o）。請填寫正確的模型名：</sys:String>
     <sys:String x:Key="Crash.Dialog.Button.GoToModify">前往修改</sys:String>
     <sys:String x:Key="Crash.Dialog.Button.OpenLog">檢視日誌</sys:String>
     <sys:String x:Key="Crash.Dialog.Title.Auto">Minecraft 出現錯誤</sys:String>
