@@ -1164,7 +1164,11 @@ public partial class PageLinkMain
         // 回到联机页时停在开服视图，而不是管理页
         CurrentSubpage = Subpages.PanServerHost;
 
-        ModMain.frmMain.PageChange(FormMain.PageType.InstanceSetup, FormMain.PageSubType.VersionMod);
+        // 分支说明：插件是独立分类，跳到自己的子页，不再挤在「模组」里
+        ModMain.frmMain.PageChange(FormMain.PageType.InstanceSetup,
+            software == ServerSoftware.Paper
+                ? FormMain.PageSubType.VersionPlugin
+                : FormMain.PageSubType.VersionMod);
     }
 
     /// <summary>
