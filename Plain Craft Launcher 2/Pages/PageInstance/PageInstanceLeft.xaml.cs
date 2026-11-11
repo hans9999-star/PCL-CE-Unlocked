@@ -109,6 +109,23 @@ public partial class PageInstanceLeft : IRefreshable
     {
         var show = ModServerContent.ActiveTarget?.CompType == ModComp.CompType.Plugin;
         ItemPlugin.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+
+        // 分支说明：处于服务端内容管理时，实例侧栏里除模组相关条目外的都是
+        // 客户端专用项（概览/设置/修改/导出/存档/截图/资源包/光影包/投影/服务器），
+        // 与服务端无关，一律隐藏，避免「服务端管理里出现客户端选项」。
+        var clientOnly = ModServerContent.ActiveTarget is null
+            ? System.Windows.Visibility.Visible
+            : System.Windows.Visibility.Collapsed;
+        ItemOverall.Visibility = clientOnly;
+        ItemSetup.Visibility = clientOnly;
+        ItemInstall.Visibility = clientOnly;
+        ItemExport.Visibility = clientOnly;
+        ItemWorld.Visibility = clientOnly;
+        ItemScreenshot.Visibility = clientOnly;
+        ItemResourcePack.Visibility = clientOnly;
+        ItemShader.Visibility = clientOnly;
+        ItemSchematic.Visibility = clientOnly;
+        ItemServer.Visibility = clientOnly;
     }
 
     public void Refresh(FormMain.PageSubType subType)
