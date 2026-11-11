@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -375,7 +375,8 @@ public partial class PageLaunchLeft
         if (ModLaunch.mcLaunchLoader.State == ModBase.LoadState.Loading)
             return;
         ModInstanceList.McMcInstanceSelected.Load();
-        PageInstanceLeft.McInstance = ModInstanceList.McMcInstanceSelected;
+        ModServerContent.ActiveTarget = null; // 从启动页进入即退出服务端内容管理
+            PageInstanceLeft.McInstance = ModInstanceList.McMcInstanceSelected;
         if (File.Exists(ModInstanceList.McMcInstanceSelected.PathInstance + ".pclignore"))
         {
             HintService.Hint(Lang.Text("Launch.Home.Instance.InstallingCannotSetup"), HintType.Error);
