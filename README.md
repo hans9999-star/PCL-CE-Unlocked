@@ -8,8 +8,8 @@
 
 解除功能限制 · 恢复完整主题 · 找回彩蛋
 
-[![Build](https://github.com/hans9999-star/PCL-CE-Unlocked/actions/workflows/build.yml/badge.svg)](https://github.com/hans9999-star/PCL-CE-Unlocked/actions/workflows/build.yml)
-![GitHub Release](https://img.shields.io/github/v/release/hans9999-star/PCL-CE-Unlocked?label=release&style=flat-square)
+[![Build](https://github.com/hans9999-star/PCL-Unbound/actions/workflows/build.yml/badge.svg)](https://github.com/hans9999-star/PCL-Unbound/actions/workflows/build.yml)
+![GitHub Release](https://img.shields.io/github/v/release/hans9999-star/PCL-Unbound?label=release&style=flat-square)
 
 </div>
 
@@ -123,14 +123,14 @@ dotnet publish "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" `
 
 ### 直接下载
 
-前往 [Releases](https://github.com/hans9999-star/PCL-CE-Unlocked/releases) 下载最新构建。
+前往 [Releases](https://github.com/hans9999-star/PCL-Unbound/releases) 下载最新构建。
 
 ## 关于启动器更新功能
 
 本项目的更新功能指向本仓库的 GitHub Releases。启动器会读取：
 
 ```
-https://api.github.com/repos/hans9999-star/PCL-CE-Unlocked/releases/latest
+https://api.github.com/repos/hans9999-star/PCL-Unbound/releases/latest
 ```
 
 因此需要在本仓库发布 Release 才能触发更新提示。CI 工作流会自动完成构建与发布。
