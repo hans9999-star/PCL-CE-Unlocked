@@ -105,6 +105,22 @@
                     </x:Array>
                 </local:MyListItem.Buttons>
             </local:MyListItem>
+            <!-- 分支说明：插件与模组并列，是独立分类（服务端插件管理也走这一项）。 -->
+            <local:MyListItem x:Name="ItemPlugin" IsScaleAnimationEnabled="False" Type="RadioBox" Tag="13"
+                              Check="PageCheck"
+                              MinPaddingRight="35" Height="36" VerticalAlignment="Top"
+                              Title="{DynamicResource Instance.Left.Plugins}"
+                              SvgIcon="lucide/package">
+                <local:MyListItem.Buttons>
+                    <x:Array Type="{x:Type local:MyIconButton}">
+                        <local:MyIconButton Tag="13" ToolTip="{DynamicResource Common.Action.Refresh}"
+                                            ToolTipService.Placement="Right"
+                                            ToolTipService.InitialShowDelay="200" ToolTipService.VerticalOffset="-1"
+                                            Click="RefreshButton_Click" LogoScale="0.85"
+                                            SvgIcon="lucide/refresh-cw" />
+                    </x:Array>
+                </local:MyListItem.Buttons>
+            </local:MyListItem>
             <local:MyListItem x:Name="ItemModDisabled" IsScaleAnimationEnabled="False" Type="RadioBox" Tag="6"
                               Check="PageCheck"
                               MinPaddingRight="35" Height="36" VerticalAlignment="Top"
