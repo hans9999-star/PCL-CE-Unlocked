@@ -17,7 +17,7 @@ public static class UpdateManager
     // 自动更新会把改版覆盖回官方版，所有解除限制的功能全部失效！
     public static UpdatesWrapperModel remoteServer = new(new List<IUpdateSource>
     {
-        new UpdatesGitHubModel("hans9999-star", "PCL-CE-Unlocked", "PCL CE Unlocked")
+        new UpdatesGitHubModel("hans9999-star", "PCL-CE-Unlocked", "Plain Craft Launcher Unbound Edition")
     });
 
     public static bool IsCurrentVersionBeta
@@ -70,7 +70,7 @@ public static class UpdateManager
     public static void UpdateStart(UpdateEnums.UpdateType type, string receivedKey = null, bool forceValidated = false)
     {
         // 分支说明：原版把更新文件名写死为 "Plain Craft Launcher Community Edition.exe"，
-        // 本改版的可执行文件名为 "PCL CE Unlocked.exe"，写死会导致更新后找不到文件。
+        // 本改版的可执行文件名为 "Plain Craft Launcher Unbound Edition.exe"，写死会导致更新后找不到文件。
         // 这里改用当前进程的真实路径，兼容任意文件名。
         var dlTargetPath = Basics.ExecutablePath;
         ModBase.RunInNewThread(() =>
