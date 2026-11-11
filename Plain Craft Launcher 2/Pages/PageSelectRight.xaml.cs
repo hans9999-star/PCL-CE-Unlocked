@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -475,12 +475,14 @@ public partial class PageSelectRight
             ToolTipService.SetHorizontalOffset(btnCont, 2d);
             btnCont.Click += (_, _) =>
             {
-                PageInstanceLeft.McInstance = version;
+                ModServerContent.ActiveTarget = null; // 从实例列表进入即退出服务端内容管理
+            PageInstanceLeft.McInstance = version;
                 ModMain.frmMain.PageChange(FormMain.PageType.InstanceSetup);
             };
             sender.MouseRightButtonUp += (_, _) =>
             {
-                PageInstanceLeft.McInstance = version;
+                ModServerContent.ActiveTarget = null; // 从实例列表进入即退出服务端内容管理
+            PageInstanceLeft.McInstance = version;
                 ModMain.frmMain.PageChange(FormMain.PageType.InstanceSetup);
             };
             sender.Buttons = new[] { btnStar, btnOpenFolder, btnDel, btnCont };
