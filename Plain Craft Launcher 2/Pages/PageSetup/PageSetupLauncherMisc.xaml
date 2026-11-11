@@ -183,6 +183,58 @@
                     </Grid>
                 </StackPanel>
             </local:MyCard>
+        <!-- 分支说明：AI 崩溃日志分析的可配置项。
+             端点默认是本机 OpenAI 兼容服务，别人用需要改成自己的地址。 -->
+        <local:MyCard Margin="0,0,0,15" Title="{DynamicResource Setup.Misc.Ai.Title}">
+            <StackPanel Margin="20,36,20,20">
+                <TextBlock Text="{DynamicResource Setup.Misc.Ai.Description}" TextWrapping="Wrap" LineHeight="20"
+                           Margin="0,0,0,12" Foreground="{DynamicResource ColorBrushGray2}" />
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="96" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{DynamicResource Setup.Misc.Ai.Endpoint}" VerticalAlignment="Center"
+                               Margin="0,0,10,0" />
+                    <local:MyTextBox Grid.Column="1" x:Name="TextAiEndpoint" Tag="AiEndpoint"
+                                     HintText="http://127.0.0.1:8326/v1"
+                                     TextChanged="TextAi_TextChanged" />
+                </Grid>
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="96" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{DynamicResource Setup.Misc.Ai.Model}" VerticalAlignment="Center"
+                               Margin="0,0,10,0" />
+                    <local:MyTextBox Grid.Column="1" x:Name="TextAiModel" Tag="AiModel"
+                                     HintText="gpt-3.5-turbo"
+                                     TextChanged="TextAi_TextChanged" />
+                </Grid>
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="96" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{DynamicResource Setup.Misc.Ai.ApiKey}" VerticalAlignment="Center"
+                               Margin="0,0,10,0" />
+                    <local:MyTextBox Grid.Column="1" x:Name="TextAiApiKey" Tag="AiApiKey"
+                                     HintText="{DynamicResource Setup.Misc.Ai.ApiKey.Hint}"
+                                     TextChanged="TextAi_TextChanged" />
+                </Grid>
+
+                <local:MyCheckBox x:Name="CheckAiEnabled" Tag="AiEnabled" Height="22" Margin="0,6,0,0"
+                                  Text="{DynamicResource Setup.Misc.Ai.Enabled}"
+                                  Change="CheckBoxChange" />
+
+                <local:MyButton x:Name="BtnAiTest" Margin="0,12,0,0" Padding="14,5" MinWidth="130"
+                                Text="{DynamicResource Setup.Misc.Ai.Test}"
+                                Click="BtnAiTest_Click" />
+            </StackPanel>
+        </local:MyCard>
         </StackPanel>
     </local:MyScrollViewer>
 </local:MyPageRight>
