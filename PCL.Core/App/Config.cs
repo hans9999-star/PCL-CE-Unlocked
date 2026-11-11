@@ -275,6 +275,11 @@ public static partial class Config
     [ConfigItem<string>("AiApiKey", "", ConfigSource.Local)] public partial string ApiKey { get; set; }
 
     [ConfigItem<int>("AiTimeoutSeconds", 120, ConfigSource.Local)] public partial int TimeoutSeconds { get; set; }
+
+    /// <summary>
+    ///     即使内置分析已经给出结论也显示「让 AI 分析」。仅供验证用，默认关。
+    /// </summary>
+    [ConfigItem<bool>("AiAlwaysShow", false, ConfigSource.Local)] public partial bool AlwaysShow { get; set; }
 }
 [ConfigGroup("Theme")] partial class ThemeConfigGroup
         {
