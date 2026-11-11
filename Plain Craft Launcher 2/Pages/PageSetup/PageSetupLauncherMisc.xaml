@@ -210,7 +210,7 @@
                     <TextBlock Text="{DynamicResource Setup.Misc.Ai.Model}" VerticalAlignment="Center"
                                Margin="0,0,10,0" />
                     <local:MyTextBox Grid.Column="1" x:Name="TextAiModel" Tag="AiModel"
-                                     HintText="gpt-3.5-turbo"
+                                     HintText="{DynamicResource Setup.Misc.Ai.Model.Hint}"
                                      TextChanged="TextAi_TextChanged" />
                 </Grid>
 
