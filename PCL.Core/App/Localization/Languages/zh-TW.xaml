@@ -113,6 +113,12 @@
 
     <sys:String x:Key="Crash.Analysis.Error.Failed">崩潰分析失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Crash.Dialog.Button.ExportReport">匯出錯誤報告</sys:String>
+    <sys:String x:Key="Crash.Dialog.Button.AiAnalyze">讓 AI 分析</sys:String>
+    <sys:String x:Key="Crash.Ai.Title">AI 日誌分析</sys:String>
+    <sys:String x:Key="Crash.Ai.Analyzing">正在請求 AI 分析日誌……</sys:String>
+    <sys:String x:Key="Crash.Ai.Empty">AI 沒有回傳任何內容</sys:String>
+    <sys:String x:Key="Crash.Ai.Failed">AI 分析失敗：{0}</sys:String>
+    <sys:String x:Key="Crash.Ai.NeedKey">這個介面需要 API Key，請填寫（會儲存下來，下次不再問）：</sys:String>
     <sys:String x:Key="Crash.Dialog.Button.GoToModify">前往修改</sys:String>
     <sys:String x:Key="Crash.Dialog.Button.OpenLog">檢視日誌</sys:String>
     <sys:String x:Key="Crash.Dialog.Title.Auto">Minecraft 出現錯誤</sys:String>
