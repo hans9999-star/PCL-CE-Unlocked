@@ -3394,6 +3394,7 @@
     <sys:String x:Key="Tools.GameLink.Link.ServerHostCommandHint">輸入指令後按 Enter，如 stop、list、op 玩家名</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostConsole">伺服器主控台</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostManage">內容管理</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostNeedInstance">需要先安裝至少一個遊戲實例才能開啟內容管理（實例設定頁依賴它）；開服本身不受影響。</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostBack">← 返回</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostOpenFolder">開啟資料夾</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostInstalled">已安裝</sys:String>
