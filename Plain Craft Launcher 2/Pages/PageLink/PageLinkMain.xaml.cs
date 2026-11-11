@@ -881,18 +881,23 @@ public partial class PageLinkMain
     {
         if (ComboServerInstance.Items.Count == 0)
         {
-            // 分支说明：与启动页一致的实例选择，选中后用来快速填好类型与版本。
-            foreach (var inst in ModServerContent.GetInstances())
-                ComboServerInstance.Items.Add(new MyComboBoxItem { Content = inst.Name, Tag = inst });
+            // 分支说明：列出本机已创建的服务端（服务端根目录扫描），
+            // 选中即切到那个服务端的类型与版本，之后的「内容管理」就是管理它装了什么。
+            foreach (var server in ModServerHost.GetCreatedServers())
+                ComboServerInstance.Items.Add(new MyComboBoxItem
+                {
+                    Content = server.Installed ? server.Display : $"{server.Display}（未安装完成）",
+                    Tag = server
+                });
 
-            if (ComboServerInstance.Items.Count > 0)
-            {
-                // 默认选中当前实例；没有则退回第一个
-                var current = PageInstanceLeft.McInstance ?? ModInstanceList.McMcInstanceSelected;
-                var match = current is null ? null : ComboServerInstance.Items.OfType<MyComboBoxItem>()
-                    .FirstOrDefault(i => ReferenceEquals(i.Tag, current));
-                ComboServerInstance.SelectedItem = match ?? ComboServerInstance.Items[0];
-            }
+            if (ComboServerInstance.Items.Count == 0)
+                ComboServerInstance.Items.Add(new MyComboBoxItem
+                {
+                    Content = Lang.Text("Tools.GameLink.Link.ServerHostNoServer"),
+                    Tag = null
+                });
+            else
+                ComboServerInstance.SelectedIndex = 0;
         }
 
         if (ComboServerType.Items.Count == 0)
@@ -958,21 +963,16 @@ public partial class PageLinkMain
     }
 
     /// <summary>
-    ///     切换「实例」：按其加载器与 MC 版本自动填好类型与版本（仍可手动改）。
+    ///     切换「服务端」：把类型与版本切到那个已创建的服务端（之后仍可手动改，
+    ///     改了就等于新建一个服务端）。
     /// </summary>
     private async void ComboServerInstance_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded) return;
-        if (ComboServerInstance.SelectedItem is not MyComboBoxItem { Tag: McInstance instance }) return;
+        if (ComboServerInstance.SelectedItem is not MyComboBoxItem { Tag: ServerEntry server }) return;
 
-        var software = instance.Info?.HasNeoForge == true
-            ? ServerSoftware.NeoForge
-            : instance.Info?.HasForge == true || instance.Info?.HasCleanroom == true
-                ? ServerSoftware.Forge
-                : instance.Info?.HasFabric == true
-                    ? ServerSoftware.Fabric
-                    : ServerSoftware.Vanilla;
-        _pendingVersion = instance.Info?.VanillaName;
+        var software = server.Software;
+        _pendingVersion = server.Version;
 
         // 直接改索引会再触发一次类型变更事件，这里抑制掉，避免重复拉取版本列表
         _suppressTypeChanged = true;
@@ -1013,6 +1013,8 @@ public partial class PageLinkMain
         try
         {
             ModServerHost.PrepareFiles(dir, port, onlineMode, maxPlayers, "PCL CE Unlocked Server");
+            // 记录类型与版本，便于「服务端」下拉准确枚举
+            ModServerHost.WriteServerMark(dir, software, version);
         }
         catch (Exception ex)
         {
