@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.IO;
 using PCL.Core.App;
 using PCL.Core.App.Localization;
@@ -43,14 +43,25 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
             directFile,
             openInstanceSettings);
 
+        // 分支说明：内置分析是查表式的，遇到没收录过的崩溃只剩「未知错误」。
+        // 这种情况下多给一个「让 AI 分析」——按钮集合是 params，不限 3 个。
+        var buttons = new List<MsgBoxButtonInfo>
+        {
+            new(Lang.Text("Common.Action.Confirm"), 1),
+            new(secondButtonText, 2, secondButtonAction),
+            new(thirdButtonText, 3)
+        };
+
+        if (!_HasSolution() && ModAiLogAnalysis.IsAvailable)
+            buttons.Add(new MsgBoxButtonInfo(Lang.Text("Crash.Dialog.Button.AiAnalyze"), 4,
+                () => _ = _AnalyzeWithAiAsync()));
+
         var selectedButton = MsgBoxWrapper.ShowWithCustomButtons(
             resultText,
             title,
             MsgBoxTheme.Info,
             true,
-            new MsgBoxButtonInfo(Lang.Text("Common.Action.Confirm"), 1),
-            new MsgBoxButtonInfo(secondButtonText, 2, secondButtonAction),
-            new MsgBoxButtonInfo(thirdButtonText, 3));
+            buttons);
 
         switch (selectedButton)
         {
@@ -64,6 +75,53 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
             case 3:
                 _ExportReport(extraFiles);
                 break;
+        }
+    }
+
+    /// <summary>内置分析是否给出了结论。没有结论时才提议让 AI 再看一遍。</summary>
+    private bool _HasSolution() => context.Result?.HasFinding == true;
+
+    /// <summary>把日志交给 AI 分析，并把结果弹出来。</summary>
+    private async Task _AnalyzeWithAiAsync(bool retried = false)
+    {
+        try
+        {
+            HintWrapper.Show(Lang.Text("Crash.Ai.Analyzing"), HintTheme.Info);
+
+            // 兜底：LogAll 为空时改用整理过的日志集合
+            var log = context.LogAll;
+            if (string.IsNullOrWhiteSpace(log)) log = context.PreparedLogs?.All ?? "";
+            var text = await ModAiLogAnalysis.AnalyzeAsync(log).ConfigureAwait(false);
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                MsgBoxWrapper.Show(Lang.Text("Crash.Ai.Empty"),
+                    Lang.Text("Crash.Ai.Title"), MsgBoxTheme.Warning);
+                return;
+            }
+
+            MsgBoxWrapper.Show(text, Lang.Text("Crash.Ai.Title"), MsgBoxTheme.Info);
+        }
+        catch (Exception ex)
+        {
+            LogWrapper.Error(ex, "Crash", "AI 分析崩溃日志失败");
+
+            // 分支说明：本机的 OpenAI 兼容服务通常要求 API Key，缺 key 时返回 401。
+            // 这里直接让用户填一次并自动重试，省得再去翻配置文件。
+            if (!retried && ex.Message.Contains("401"))
+            {
+                var key = Microsoft.VisualBasic.Interaction.InputBox(
+                    Lang.Text("Crash.Ai.NeedKey"), Lang.Text("Crash.Ai.Title"), "");
+                if (!string.IsNullOrWhiteSpace(key))
+                {
+                    Config.Preference.Ai.ApiKey = key.Trim();
+                    await _AnalyzeWithAiAsync(true).ConfigureAwait(false);
+                    return;
+                }
+            }
+
+            MsgBoxWrapper.Show(Lang.Text("Crash.Ai.Failed", ex.Message),
+                Lang.Text("Crash.Ai.Title"), MsgBoxTheme.Error);
         }
     }
 
