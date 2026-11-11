@@ -3375,6 +3375,7 @@
     <sys:String x:Key="Tools.GameLink.Link.ServerHostTitle">Host a Server</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostSubtitle">Start a vanilla server on the current instance, then share it with your friends.</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType">Server Type</sys:String>
+    <sys:String x:Key="Tools.GameLink.Link.ServerHostInstance">Instance</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostVersion">Version</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Vanilla">Vanilla</sys:String>
     <sys:String x:Key="Tools.GameLink.Link.ServerHostType.Paper">Paper (plugins)</sys:String>
