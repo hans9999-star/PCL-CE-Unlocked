@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -59,6 +59,7 @@ public partial class PageInstanceSetup
         CheckAdvanceDisableLF.Change += CheckBoxChange;
         CheckUseDebugLog4j2Config.Change += CheckUseDebugLog4j2Config_CheckChanged;
         CheckAdvanceDisableLwjglUnsafeAgent.Change += CheckBoxChange;
+        CheckOverlayNoPause.Change += CheckOverlayNoPause_Change;
 
         BtnSwitch.Click += BtnSwitch_Click;
         
@@ -136,6 +137,7 @@ public partial class PageInstanceSetup
             }
 
             CheckAdvanceAssetsV2.Checked = Config.Instance.DisableAssetVerifyV2[PageInstanceLeft.McInstance.PathInstance];
+        CheckOverlayNoPause.Checked = Config.Instance.OverlayNoPause[PageInstanceLeft.McInstance.PathInstance];
             CheckAdvanceUseProxyV2.Checked = Config.Instance.UseProxy[PageInstanceLeft.McInstance.PathInstance];
             CheckAdvanceJava.Checked = Config.Instance.IgnoreJavaCompatibility[PageInstanceLeft.McInstance.PathInstance];
             if (SystemInfo.IsArm64System)
@@ -229,6 +231,19 @@ public partial class PageInstanceSetup
         SetByTag(sender.Tag?.ToString(), sender.SelectedIndex);
     }
 
+    /// <summary>
+    ///     覆盖层免暂停开关。<br/>
+    ///     分支说明：这个开关会改动游戏的 options.txt，所以关闭时必须把设置改回去 ——
+    ///     否则「失焦不暂停」会一直留在游戏里（Alt+Tab 出去怪物照常活动），
+    ///     而用户以为已经关掉了。
+    /// </summary>
+    private void CheckOverlayNoPause_Change(object sender, bool user)
+    {
+        CheckBoxChange(sender, user);
+
+        if (sender is MyCheckBox { Checked: false })
+            ModGameOverlay.RestorePauseOnLostFocus(PageInstanceLeft.McInstance);
+    }
     private void CheckBoxChange(object sender, bool user)
     {
         if (ModAnimation.AniExitsAnyControl())

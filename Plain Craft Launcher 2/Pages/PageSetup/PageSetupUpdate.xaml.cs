@@ -268,7 +268,7 @@ public partial class PageSetupUpdate
 
     private void BtnChangelog_Click(object sender, MouseButtonEventArgs e)
     {
-        ModBase.OpenWebsite("https://github.com/PCL-Community/PCL2-CE/releases/v" + ModBase.versionBaseName);
+        ModBase.OpenWebsite("https://github.com/hans9999-star/PCL-Unbound/releases/tag/v" + ModBase.versionBaseName);
     }
 
     public string VersionNameFormat(string str)

@@ -123,7 +123,11 @@ public static class FileDownloader
     {
         const int bufferSize = 64 * 1024;
         const int readTimeoutMilliseconds = 30_000;
-        using var connection = await DownloadResourceManager.AcquireConnectionAsync(url, cancellationToken)
+        // 分支说明：此时响应头还没到，拿不到真实大小，但清单里通常有预期大小，
+        // 足够用来选择通道。清单也没有时按小文件处理（更保守，不影响大文件的正确性）。
+        var knownSize = trackedFile?.Check.actualSize ?? -1;
+        using var connection = await DownloadResourceManager.AcquireConnectionAsync(
+                url, cancellationToken, knownSize > 0 ? knownSize : null)
             .ConfigureAwait(false);
         using var request = CreateDownloadRequest(url, useBrowserUserAgent, customUserAgent, requestKind);
         using var response = await SendDownloadRequestAsync(url, request, cancellationToken).ConfigureAwait(false);

@@ -73,6 +73,11 @@ public partial class PageToolsLeft
                 ModMain.frmToolsTest ??= new PageToolsTest();
                 return ModMain.frmToolsTest;
             }
+            case FormMain.PageSubType.ToolsWiki:
+            {
+                ModMain.frmToolsWiki ??= new PageToolsWiki();
+                return ModMain.frmToolsWiki;
+            }
             default:
             {
                 throw new Exception("未知的更多子页面种类：" + (int)id);

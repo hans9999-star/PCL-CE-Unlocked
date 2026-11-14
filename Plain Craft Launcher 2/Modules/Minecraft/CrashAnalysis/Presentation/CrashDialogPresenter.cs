@@ -210,7 +210,7 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
             string text;
             try
             {
-                text = await ModAiLogAnalysis.AnalyzeAsync(log, cts.Token).ConfigureAwait(false);
+                text = await ModAiLogAnalysis.AnalyzeAsync(log, context.Instance, cts.Token).ConfigureAwait(false);
             }
             finally
             {
@@ -227,6 +227,49 @@ internal sealed class CrashDialogPresenter(CrashAnalysisContext context)
                 MsgBoxWrapper.Show(Lang.Text("Crash.Ai.Empty"),
                     Lang.Text("Crash.Ai.Title"), MsgBoxTheme.Warning);
                 return;
+            }
+
+
+            // 分支说明：AI 可能在回答里附带了直接修复的 JSON 指令。
+            // 先解析并校验，再弹窗让用户确认；确认后才执行（执行前自动备份）。
+            var fixes = ModAiCrashFix.Parse(text, context.Instance, out var cleanText);
+            var shown = string.IsNullOrWhiteSpace(cleanText) ? text : cleanText;
+
+            var runnable = fixes.Where(f => f.Error is null).ToList();
+            if (runnable.Count > 0)
+            {
+                var summary = ModAiCrashFix.Describe(runnable);
+                var message = shown +
+                              "\n\n──────────\n" +
+                              Lang.Text("Crash.Ai.Fix.Found", runnable.Count) +
+                              "\n\n" + summary +
+                              "\n\n" + Lang.Text("Crash.Ai.Fix.Confirm");
+                var answer = MsgBoxWrapper.Show(
+                    message,
+                    Lang.Text("Crash.Ai.Title"),
+                    MsgBoxTheme.Warning,
+                    true,
+                    Lang.Text("Crash.Ai.Fix.Apply"),
+                    Lang.Text("Crash.Ai.Fix.Skip"));
+                if (answer == 1)
+                {
+                    var errors = new List<string>();
+                    var succeeded = 0;
+                    foreach (var fix in runnable)
+                    {
+                        var error = ModAiCrashFix.Execute(fix);
+                        if (error is null) succeeded++;
+                        else errors.Add(error);
+                    }
+
+                    var report = errors.Count == 0
+                        ? Lang.Text("Crash.Ai.Fix.Ok", succeeded)
+                        : Lang.Text("Crash.Ai.Fix.Partial", succeeded, errors.Count) +
+                          "\n" + string.Join("\n", errors);
+                    MsgBoxWrapper.Show(report, Lang.Text("Crash.Ai.Title"),
+                        errors.Count == 0 ? MsgBoxTheme.Info : MsgBoxTheme.Warning);
+                    return;
+                }
             }
 
             MsgBoxWrapper.Show(text, Lang.Text("Crash.Ai.Title"), MsgBoxTheme.Info);

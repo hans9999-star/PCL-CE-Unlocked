@@ -24,12 +24,19 @@ public partial class Application
         // 注册生命周期事件
         Lifecycle.When(LifecycleState.Loaded, _ApplicationStartup);
         Lifecycle.When(LifecycleState.WindowCreated, _ShowEnvironmentWarning);
+        Lifecycle.When(LifecycleState.WindowCreated, _AdoptRunningGameAsync);
+        // 监视游戏全屏形态：确保是「无边框窗口化」，覆盖层才能叠在上面
+        Lifecycle.When(LifecycleState.WindowCreated, ModGameFullscreen.Start);
         SessionEnding += _ApplicationSessionEnding;
     }
 
     // 开始
     private static void _ApplicationStartup()
     {
+        // 单实例检查放在最前面：此时窗口还没创建，
+        // 多余的实例可以在用户看到任何界面之前就干净退出。
+        if (!ModSingleInstance.TryAcquire()) Environment.Exit((int)ModBase.ProcessReturnValues.TaskDone);
+
         try
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -123,6 +130,28 @@ public partial class Application
     }
 
     // 检测异常环境
+    /// <summary>
+    ///     启动后后台识别已经在运行的游戏。<br/>
+    ///     分支说明：本启动器如果不是它亲自启动的游戏，就不知道那个进程的存在，
+    ///     覆盖层与热键都会失效。这里在启动时补一次识别，失败也无所谓（放后台）。
+    /// </summary>
+    private static void _AdoptRunningGameAsync()
+    {
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                // 稍等一下，让实例列表先加载完，否则拿不到对应实例去比对
+                Thread.Sleep(3000);
+                ModGameAdopt.TryAdopt(ModInstanceList.McMcInstanceSelected, force: true);
+            }
+            catch (Exception ex)
+            {
+                ModBase.Log(ex, "[Overlay] 启动时识别游戏失败", ModBase.LogLevel.Developer);
+            }
+        });
+    }
+
     private static void _ShowEnvironmentWarning()
     {
         var problemList = new List<string>();

@@ -78,6 +78,8 @@ public static partial class Config
         // 保留原配置键，升级后仍沿用用户已设置的数值（值 + 1 为连接上限）。
         [ConfigItem<int>("ToolDownloadThread", 63)] public partial int ThreadLimit { get; set; }
         [ConfigItem<int>("ToolDownloadFileConnection", 7)] public partial int FileConnectionLimit { get; set; }
+    [ConfigItem<int>("ToolDownloadThreadLarge", 32)] public partial int ThreadLimitLarge { get; set; } // 大文件通道并发
+    [ConfigItem<int>("ToolDownloadThreadSmall", 32)] public partial int ThreadLimitSmall { get; set; } // 小文件通道并发
         [ConfigItem<int>("ToolDownloadSpeed", 42)] public partial int SpeedLimit { get; set; }
         [ConfigItem<DownloadHttpMode>("ToolDownloadHttpMode", DownloadHttpMode.Auto)] public partial DownloadHttpMode HttpMode { get; set; }
         [ConfigItem<int>("ToolDownloadSource", 1)] public partial int FileSource { get; set; }
@@ -110,6 +112,31 @@ public static partial class Config
         // [ConfigItem<int>("ToolUpdateAlpha", 0, ConfigSource.SharedEncrypt)] public partial int Alpha { get; set; }
         [ConfigItem<bool>("ToolUpdateRelease", false)] public partial bool ReleaseNotification { get; set; }
         [ConfigItem<bool>("ToolUpdateSnapshot", false)] public partial bool SnapshotNotification { get; set; }
+
+        /// <summary>
+        ///     让游戏以「窗口化 / 最大化」运行，而不是真全屏。
+        ///     真全屏会走独立翻转绕过 DWM，游戏内覆盖层就没有绘制路径；
+        ///     最大化带边框则不影响合成，覆盖层才能用。
+        /// </summary>
+        [ConfigItem<bool>("ToolPreferWindowedForOverlay", true)] public partial bool PreferWindowedForOverlay { get; set; }
+        /// <summary>
+        ///     游戏启动后自动把窗口最大化。
+        ///     默认**关闭** —— 窗口形态该由玩家自己决定，不该被启动器强行设定。
+        ///     开启后覆盖层在全屏时也能用（最大化带边框，不触发独立翻转）。
+        /// </summary>
+        [ConfigItem<bool>("ToolMaximizeGameOnLaunch", false)] public partial bool MaximizeGameOnLaunch { get; set; }
+        /// <summary>
+        ///     接管 F11：阻止游戏进入自带全屏，改由启动器实现「无边框全屏」。
+        ///     游戏自带全屏会触发独立翻转绕过 DWM，游戏内覆盖层无法显示；
+        ///     由启动器实现的无边框全屏只覆盖工作区，DWM 正常合成，覆盖层可用。
+        /// </summary>
+        [ConfigItem<bool>("ToolF11BorderlessFullscreen", true)] public partial bool F11BorderlessFullscreen { get; set; }
+        /// <summary>
+        ///     只允许运行一个启动器实例。再次启动会把已有窗口激活并退出本次启动。
+        ///     关掉即恢复多开（本分支原有的行为）。
+        /// </summary>
+        [ConfigItem<bool>("ToolSingleInstance", true)] public partial bool SingleInstance { get; set; }
+
     }
 
     /// <summary>
@@ -281,7 +308,7 @@ public static partial class Config
 
     [ConfigItem<string>("AiApiKey", "", ConfigSource.Local)] public partial string ApiKey { get; set; }
 
-    [ConfigItem<int>("AiTimeoutSeconds", 120, ConfigSource.Local)] public partial int TimeoutSeconds { get; set; }
+    [ConfigItem<int>("AiTimeoutSeconds", 300, ConfigSource.Local)] public partial int TimeoutSeconds { get; set; }
 
     /// <summary>
     ///     即使内置分析已经给出结论也显示「让 AI 分析」。仅供验证用，默认关。
@@ -527,6 +554,7 @@ public static partial class Config
             // 子页面 工具
             [ConfigItem<bool>("UiHiddenToolsGameLink", false, ConfigSource.Local)] public partial bool ToolsGameLink { get; set; } // 新增
             [ConfigItem<bool>("UiHiddenToolsTest", false, ConfigSource.Local)] public partial bool ToolsTest { get; set; } // 新增
+    [ConfigItem<bool>("UiHiddenToolsWiki", false, ConfigSource.Local)] public partial bool ToolsWiki { get; set; } // Wiki 查询页
 
             // 子页面 实例设置
             [ConfigItem<bool>("UiHiddenVersionEdit", false, ConfigSource.Local)] public partial bool InstanceEdit { get; set; }
@@ -713,6 +741,12 @@ public static partial class Config
         [ConfigItem<bool>("VersionArgumentIndieV2", false)] public partial ArgConfig<bool> IndieV2 { get; }
         [ConfigItem<string>("VersionArgumentJavaSelect", "使用全局设置")] public partial ArgConfig<string> SelectedJava { get; }
         [ConfigItem<string>("VersionServerEnter", "")] public partial ArgConfig<string> ServerToEnter { get; }
+        /// <summary>
+        ///     启动前关闭游戏的「失焦自动暂停」，供游戏内覆盖层使用。
+        ///     默认开启：覆盖层打字时要接管键盘焦点，不关掉会被暂停菜单打断。
+        ///     关掉时会把 options.txt 改回 pauseOnLostFocus:true。
+        /// </summary>
+        [ConfigItem<bool>("VersionOverlayNoPause", true)] public partial ArgConfig<bool> OverlayNoPause { get; }
     }
 
     /// <summary>

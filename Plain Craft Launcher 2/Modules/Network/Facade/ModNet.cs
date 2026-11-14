@@ -18,6 +18,19 @@ public static class ModNet
     /// <summary>单个大文件可同时使用的最大连接数。</summary>
     public static int NetTaskSingleFileConnectionLimit { get; set; } = 8;
 
+    /// <summary>
+    ///     大文件通道（游戏 jar、整合包等）的最大并发连接数。<br/>
+    ///     与小文件通道各自独立计数，互不挤占。
+    /// </summary>
+    public static int NetTaskConnectionLimitLarge { get; set; } = 32;
+
+    /// <summary>小文件通道（资源、库等）的最大并发连接数。</summary>
+    public static int NetTaskConnectionLimitSmall { get; set; } = 32;
+
+    /// <summary>取指定通道的并发上限。</summary>
+    public static int GetChannelConnectionLimit(bool largeChannel) =>
+        largeChannel ? NetTaskConnectionLimitLarge : NetTaskConnectionLimitSmall;
+
     [Obsolete("请使用 NetTaskConnectionLimit。")]
     public static int NetTaskThreadLimit
     {

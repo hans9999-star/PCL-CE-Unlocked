@@ -24,12 +24,12 @@ public partial class PageLaunchLeft
     public interface ILoginPage { void Reload(); }
 
     private enum LaunchButtonAction
-    {
-        Loading,
-        Launch,
-        Download,
-        Disabled
-    }
+  {
+  Loading,
+  Launch,
+  Download,
+  Disabled
+  }
 
     private LaunchButtonAction _launchButtonAction;
 

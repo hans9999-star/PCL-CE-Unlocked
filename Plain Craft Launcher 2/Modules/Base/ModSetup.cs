@@ -33,6 +33,10 @@ public class ModSetup
             e => ToolDownloadThread((int)e.Value!)));
         Config.Download.FileConnectionLimitConfig.Observe(new ConfigObserver(ConfigEvent.Changed,
             e => ToolDownloadFileConnection((int)e.Value!)));
+        Config.Download.ThreadLimitLargeConfig.Observe(new ConfigObserver(ConfigEvent.Changed,
+            e => ToolDownloadChannelLimit(large: true, (int)e.Value!)));
+        Config.Download.ThreadLimitSmallConfig.Observe(new ConfigObserver(ConfigEvent.Changed,
+            e => ToolDownloadChannelLimit(large: false, (int)e.Value!)));
         Config.Download.SpeedLimitConfig.Observe(new ConfigObserver(ConfigEvent.Changed,
             e => ToolDownloadSpeed((int)e.Value!)));
 
@@ -116,6 +120,8 @@ public class ModSetup
         // Tool
         ToolDownloadThread(Config.Download.ThreadLimit);
         ToolDownloadFileConnection(Config.Download.FileConnectionLimit);
+        ToolDownloadChannelLimit(large: true, Config.Download.ThreadLimitLarge);
+        ToolDownloadChannelLimit(large: false, Config.Download.ThreadLimitSmall);
         ToolDownloadSpeed(Config.Download.SpeedLimit);
 
         // UI - Launcher
@@ -199,6 +205,21 @@ public class ModSetup
     public static void ToolDownloadThread(int value)
     {
         ModNet.NetTaskConnectionLimit = Math.Clamp(value + 1, 1, ModNet.NetTaskConnectionLimitMax);
+        DownloadResourceManager.OnConnectionLimitChanged();
+    }
+
+    /// <summary>
+    ///     设置某条下载通道的并发上限。<br/>
+    ///     大文件通道控制游戏 jar、整合包等；小文件通道控制资源、库等。
+    /// </summary>
+    /// <param name="large">true 为大文件通道，false 为小文件通道。</param>
+    /// <param name="value">滑块值，实际并发数为 value + 1。</param>
+    public static void ToolDownloadChannelLimit(bool large, int value)
+    {
+        var limit = Math.Clamp(value + 1, 1, ModNet.NetTaskConnectionLimitMax);
+        if (large) ModNet.NetTaskConnectionLimitLarge = limit;
+        else ModNet.NetTaskConnectionLimitSmall = limit;
+
         DownloadResourceManager.OnConnectionLimitChanged();
     }
 
@@ -433,7 +454,7 @@ public class ModSetup
                     Lang.Text("Setup.Ui.Homepage.NetUpdate.Hint");
                 CustomEventService.SetEventType(ModMain.frmSetupUI.HintCustom, EventType.OpenUrl);
                 CustomEventService.SetEventData(ModMain.frmSetupUI.HintCustom,
-                    "https://github.com/PCL-Community/PCL-CE/discussions");
+                    "https://github.com/hans9999-star/PCL-Unbound/discussions");
                 break;
             }
             case 3: // 预设

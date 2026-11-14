@@ -2503,6 +2503,16 @@ public static class ModLaunch
         startInfo.Arguments = mcLaunchArgument;
         gameProcess.StartInfo = startInfo;
 
+        // 分支说明：游戏内覆盖层在需要打字时会接管键盘焦点，
+        // 而 Minecraft 默认失焦即弹暂停菜单，会把玩家打断。
+        // 启动前把游戏自带的「失焦自动暂停」关掉，不需要注入或钩子。
+        ModGameOverlay.EnsurePauseOnLostFocusDisabled(ModInstanceList.McMcInstanceSelected);
+
+        // 让游戏以窗口化启动：真全屏会绕过 DWM，游戏内覆盖层无法显示
+        ModGameFullscreen.EnsureWindowedMode(ModInstanceList.McMcInstanceSelected);
+        ModGameFullscreen.ResetMaximizedFlag();
+        ModBorderlessFullscreen.Reset();   // 新进程的窗口是全新的，旧的无边框状态作废
+
         // 开始进程
         gameProcess.Start();
         McLaunchLog("已启动游戏进程：" + startInfo.FileName);

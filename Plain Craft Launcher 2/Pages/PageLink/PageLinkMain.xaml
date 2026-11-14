@@ -184,11 +184,52 @@
                                     <local:MyButton x:Name="BtnServerShare" Margin="0,0,10,0" Padding="14,7"
                                                     Text="{DynamicResource Tools.GameLink.Link.ServerHostShare}"
                                                     Click="BtnServerShare_Click" />
-                                    <local:MyButton x:Name="BtnServerFiles" Padding="14,7"
+                                    <local:MyButton x:Name="BtnServerFiles" Padding="14,7" Margin="0,0,10,0"
                                                     Text="{DynamicResource Tools.GameLink.Link.ServerHostManage}"
                                                     Click="BtnServerFiles_Click" />
+                                    <!-- 服务端整合包：复用下载页的整合包分类 -->
+                                    <local:MyButton x:Name="BtnServerModpack" Padding="14,7"
+                                                    Text="{DynamicResource Tools.GameLink.Link.ServerHostModpack}"
+                                                    ToolTip="{DynamicResource Tools.GameLink.Link.ServerHostModpack.ToolTip}"
+                                                    Click="BtnServerModpack_Click" />
                                 </StackPanel>
                             </Grid>
+                            <!-- 分支说明：分享到大厅成功后，把邀请码直接显示在开服页顶部。
+                                 原先的做法是整页切到 PanFinish —— 那样控制台就被隐藏了。
+                                 PanFinish 本身保留不动，加入房间那条路径仍在用它。 -->
+                            <Border x:Name="PanServerShareInfo" Margin="10,0,10,10" Padding="12,9"
+                                    CornerRadius="6" Background="{DynamicResource ColorBrushGray7}"
+                                    Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource Tools.GameLink.Link.ServerHostShareInfo}"
+                                               VerticalAlignment="Center" FontSize="13" Opacity="0.7"
+                                               Margin="0,0,10,0" />
+
+                                    <TextBlock Grid.Column="1" x:Name="LabServerShareCode"
+                                               VerticalAlignment="Center" FontSize="16"
+                                               FontFamily="Consolas, Microsoft YaHei UI"
+                                               FontWeight="Bold"
+                                               Foreground="{DynamicResource ColorBrush3}"
+                                               TextTrimming="CharacterEllipsis" />
+
+                                    <local:MyButton Grid.Column="2" x:Name="BtnServerShareCopy"
+                                                    Margin="10,0,8,0" Padding="12,5"
+                                                    Text="{DynamicResource Tools.GameLink.Link.ServerHostShareCopy}"
+                                                    Click="BtnServerShareCopy_Click" />
+
+                                    <local:MyButton Grid.Column="3" x:Name="BtnServerShareStop"
+                                                    Padding="12,5"
+                                                    Text="{DynamicResource Tools.GameLink.Link.ServerHostShareStop}"
+                                                    Click="BtnServerShareStop_Click" />
+                                </Grid>
+                            </Border>
                             <!-- 分支说明：服务端类型与版本独立于当前实例选择。
                                  下面三行共用同一套列宽，标签左对齐；下拉框给足宽度，
                                  避免「Paper（插件端）」「Fabric（模组端）」这类文本被裁。 -->
@@ -250,6 +291,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*" MinHeight="96" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Border Background="{DynamicResource ColorBrushGray7}" CornerRadius="6">
                                 <!-- 分支说明：控制台内部再套一层 MyScrollViewer。
@@ -267,7 +309,7 @@
                                              Foreground="{DynamicResource ColorBrushGray1}" />
                                 </local:MyScrollViewer>
                             </Border>
-                            <DockPanel Grid.Row="1" Margin="0,10,0,0">
+                            <DockPanel Grid.Row="2" Margin="0,10,0,0">
                                 <local:MyButton x:Name="BtnServerSend" DockPanel.Dock="Right" Margin="10,0,0,0"
                                                 Padding="16,8" ColorType="Highlight"
                                                 Text="{DynamicResource Tools.GameLink.Link.ServerHostSend}"
@@ -277,6 +319,9 @@
                                                  MaxLines="1" AcceptsReturn="False"
                                                  KeyDown="TextServerCommand_KeyDown" />
                             </DockPanel>
+
+                            <!-- 快捷命令：常用服务端指令一键发送 -->
+                            <WrapPanel x:Name="PanQuickCommands" Grid.Row="1" Margin="0,8,0,0" />
                         </Grid>
                     </local:MyCard>
                 </Grid>
@@ -297,6 +342,7 @@
                             <ColumnDefinition Width="1*" /> <!--文本区 ↓↓-->
                             <ColumnDefinition Width="Auto" /> <!--按钮 1-->
                             <ColumnDefinition Width="Auto" /> <!--按钮 2-->
+                            <ColumnDefinition Width="Auto" /> <!--按钮 3：返回控制台-->
                             <ColumnDefinition Width="25" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
@@ -315,7 +361,13 @@
                                    Text=""
                                    FontSize="14" LineHeight="19" MaxWidth="400" TextWrapping="Wrap" Foreground="{StaticResource ColorBrushGray2}" />
                         <local:MyButton x:Name="BtnFinishCopy" Grid.Column="4" Grid.Row="3" Click="BtnFinishCopy_Click" Margin="0,0,15,0" Text="{DynamicResource Tools.GameLink.Link.Finish.CopyCode}" Padding="13,8" ColorType="Highlight" />
-                        <local:MyButton x:Name="BtnFinishExit" Grid.Column="5" Grid.Row="3" Click="BtnFinishExit_Click" Text="{DynamicResource Tools.GameLink.Link.Finish.Close}" Padding="13,8" />
+                        <!-- 分支说明：分享成功后界面会切到这一页，但开服控制台在 PanServerHost。
+                             没有返回入口的话，用户就再也看不到控制台了。 -->
+                        <local:MyButton x:Name="BtnFinishBack" Grid.Column="5" Grid.Row="3"
+                                        Click="BtnFinishBack_Click" Margin="0,0,15,0"
+                                        Text="{DynamicResource Tools.GameLink.Link.Finish.BackToConsole}"
+                                        Padding="13,8" />
+                        <local:MyButton x:Name="BtnFinishExit" Grid.Column="6" Grid.Row="3" Click="BtnFinishExit_Click" Text="{DynamicResource Tools.GameLink.Link.Finish.Close}" Padding="13,8" />
                     </Grid>
                 </local:MyCard>
                 <local:MyCard Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="8">

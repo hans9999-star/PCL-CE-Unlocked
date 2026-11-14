@@ -75,6 +75,7 @@ internal sealed class AdaptiveRangeDownloader
 
     private async Task<RangeProbe?> ProbeAsync(CancellationToken cancellationToken)
     {
+        // 探测阶段还不知道总大小，按小文件通道申请（探测只取 1 字节，负担极轻）
         using var connection = await DownloadResourceManager.AcquireConnectionAsync(_url, cancellationToken)
             .ConfigureAwait(false);
         using var request = CreateRequest(HttpMethod.Get, DownloadRequestKind.RangeProbe);
@@ -290,7 +291,9 @@ internal sealed class AdaptiveRangeDownloader
 
         private async Task DownloadSegmentAsync(DownloadSegment segment, CancellationToken cancellationToken)
         {
-            using var connection = await DownloadResourceManager.AcquireConnectionAsync(_owner._url, cancellationToken)
+            // 已知道文件总大小，据此选择大小文件通道
+            using var connection = await DownloadResourceManager.AcquireConnectionAsync(
+                    _owner._url, cancellationToken, _totalSize)
                 .ConfigureAwait(false);
             Interlocked.Increment(ref _activeConnections);
             var startedAt = Stopwatch.GetTimestamp();

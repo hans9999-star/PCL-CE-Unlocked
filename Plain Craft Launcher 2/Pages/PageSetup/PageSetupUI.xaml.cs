@@ -1096,11 +1096,14 @@ public partial class PageSetupUI
             {
                 ModMain.frmToolsLeft.ItemTest.Visibility =
                     !HiddenForceShow && conf.ToolsTest ? Visibility.Collapsed : Visibility.Visible;
+                // 分支说明：本分支新增了 Wiki 查询页，工具页不再只有一个子页面。
+                // 原来的实现是「只剩一个子页面就隐藏整个左侧选择卡」，现在必须去掉这个判断，
+                // 否则左侧永远不显示，用户根本看不到 Wiki 入口。
+                ModMain.frmToolsLeft.ItemWiki.Visibility =
+                    !HiddenForceShow && conf.ToolsWiki ? Visibility.Collapsed : Visibility.Visible;
                 ModMain.frmToolsLeft.TextToolsCategory.Visibility = Visibility.Visible;
                 ModMain.frmToolsLeft.TextToolsCategory.Opacity = 0.6;
-                // 只剩一个子页面时不显示左侧选择卡
-                ModMain.frmToolsLeft.PanItem.Visibility =
-                    HiddenForceShow ? Visibility.Visible : Visibility.Collapsed;
+                ModMain.frmToolsLeft.PanItem.Visibility = Visibility.Visible;
             }
 
             // 其他入口刷新

@@ -415,6 +415,12 @@
                                           x:Name="CheckAdvanceDisableLwjglUnsafeAgent"
                                           Tag="VersionAdvanceDisableLwjglUnsafeAgent"
                                           ToolTip="{DynamicResource Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip}" />
+                        <!-- 覆盖层免暂停：关掉游戏的失焦自动暂停，避免用覆盖层时被暂停菜单打断 -->
+                        <local:MyCheckBox Height="28"
+                                          Text="{DynamicResource Instance.Setup.Advanced.OverlayNoPause}"
+                                          x:Name="CheckOverlayNoPause"
+                                          Tag="VersionOverlayNoPause"
+                                          ToolTip="{DynamicResource Instance.Setup.Advanced.OverlayNoPause.ToolTip}" />
                     </StackPanel>
                 </Grid>
             </local:MyCard>

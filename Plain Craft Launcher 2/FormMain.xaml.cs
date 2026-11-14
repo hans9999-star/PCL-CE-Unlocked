@@ -47,7 +47,7 @@ public partial class FormMain
                 changelog = Lang.Text("Main.UpdateLog.Empty");
             if (ModMain.MyMsgBoxMarkdown(changelog,
                     Lang.Text("Main.UpdateLog.Title", ModBase.versionBranchName, ModBase.versionBaseName), Lang.Text("Common.Action.Confirm"), Lang.Text("Main.UpdateLog.FullChangelog")) ==
-                2) ModBase.OpenWebsite("https://github.com/PCL-Community/PCL2-CE/releases");
+                2) ModBase.OpenWebsite("https://github.com/hans9999-star/PCL-Unbound/releases");
         }, "UpdateLog Output");
     }
 
@@ -216,6 +216,8 @@ public partial class FormMain
             {
                 RenderTransform = null;
                 isWindowLoadFinished = true;
+                // 注册游戏内叠加面板的全局热键：Ctrl+Alt+W
+                RegisterOverlayHotKey();
                 // 窗口加载动画结束，补一次右键菜单主题刷新（启动阶段被跳过）
                 ThemeManager.ThemeRefresh();
                 ModBase.Log(
@@ -248,7 +250,7 @@ public partial class FormMain
                         $"{hint}{"\r\n"}{"\r\n"}{Lang.Text("Main.SpecialVersion.HideHintNotice")}",
                         Lang.Text("Main.SpecialVersion.Title"), Lang.Text("Main.SpecialVersion.IUnderstand"), Lang.Text("Main.SpecialVersion.OpenDownloadPageAndExit"), isWarn: true, button2Action: () =>
                         {
-                            ModBase.OpenWebsite("https://github.com/PCL-Community/PCL2-CE/releases/latest");
+                            ModBase.OpenWebsite("https://github.com/hans9999-star/PCL-Unbound/releases/latest");
                             EndProgram(false);
                         });
                 }
@@ -594,7 +596,7 @@ public partial class FormMain
             if (!isLogShown)
             {
                 ModBase.FeedbackInfo();
-                ModBase.Log("请在 https://github.com/PCL-Community/PCL2-CE/issues 提交错误报告，以便于社区解决此问题！（这也有可能是原版 PCL 的问题）");
+                ModBase.Log("请在 https://github.com/hans9999-star/PCL-Unbound/issues 提交错误报告，以便于社区解决此问题！（这也有可能是原版 PCL 的问题）");
                 isLogShown = true;
                 ModBase.ShellOnly(LogWrapper.CurrentLogger.CurrentLogFiles.Last());
             }
@@ -655,8 +657,10 @@ public partial class FormMain
             VideoBack.Height = formHeight;
         }
 
-        if (WindowState == WindowState.Maximized)
-            WindowState = WindowState.Normal; // 修复 #1938
+        // 分支说明：原版的「修复 #1938」会在这里强制退出最大化：
+        //     if (WindowState == WindowState.Maximized) WindowState = WindowState.Normal;
+        // 但 SizeChanged 在最大化时必然触发，于是窗口一放大就被立刻缩回窗口化。
+        // 本分支已加入最大化按钮，故移除该强制还原；尺寸同步逻辑本身不受影响。
     }
 
     // 标题栏改变大小
@@ -672,6 +676,146 @@ public partial class FormMain
     private void BtnTitleMin_Click(object sender, EventArgs e)
     {
         WindowState = WindowState.Minimized;
+    }
+
+    /// <summary>最大化 / 还原切换。</summary>
+    private void BtnTitleMax_Click(object sender, EventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized
+            ? WindowState.Normal
+            : WindowState.Maximized;
+    }
+
+    /// <summary>
+    ///     根据窗口状态切换最大化按钮的图标：最大化时显示「还原」的双框，否则显示单框。
+    /// </summary>
+    private void RefreshMaxButtonIcon()
+    {
+        if (BtnTitleMax is null) return;
+        BtnTitleMax.Logo = WindowState == WindowState.Maximized
+            ? "F1 M4,1 h10 v10 h-2 v-8 h-8 Z M1,4 h10 v10 h-10 Z"   // 还原：两个错开的方框
+            : "F1 M2,2 h12 v12 h-12 Z M3.5,3.5 v9 h9 v-9 Z";       // 最大化：单个空心方框
+    }
+
+    /// <summary>叠加面板的热键 ID。</summary>
+    private const int OverlayHotKeyId = 0xA501;
+
+    /// <summary>F11：由启动器接管，改为切换「无边框全屏」。</summary>
+    private const int BorderlessHotKeyId = 0xA502;
+
+    /// <summary>注册游戏内叠加面板的全局热键。</summary>
+    private void RegisterOverlayHotKey()
+    {
+        try
+        {
+            var handle = new WindowInteropHelper(this).Handle;
+            if (handle == IntPtr.Zero)
+            {
+                ModBase.Log("[Overlay] 窗口句柄无效，跳过热键注册", ModBase.LogLevel.Hint);
+                return;
+            }
+
+            // 分支说明：用户指定用 Shift+Tab。注意 Tab 的虚拟键是 0x09，
+            // 这是「按住 Shift 再按 Tab」，与单独按 Tab（切换焦点）不冲突。
+
+            var ok = ModHotKey.Register(handle, OverlayHotKeyId,
+                ModHotKey.ModShift, 0x09, ToggleOverlay);
+
+            // 接管 F11：注册为「无修饰键」的全局热键。系统会把它优先派发给我们，
+            // 游戏收不到 F11，也就不会进入自带全屏 —— 这就是「关闭游戏自带全屏」。
+            if (Config.Tool.F11BorderlessFullscreen)
+            {
+                var okF11 = ModHotKey.Register(handle, BorderlessHotKeyId,
+                    0, 0x7A /* VK_F11 */, ModBorderlessFullscreen.Toggle);
+                ModBase.Log(okF11
+                    ? "[Borderless] 已接管 F11（游戏运行时按 F11 切换无边框全屏）"
+                    : "[Borderless] F11 接管失败（可能被其它程序占用）",
+                    okF11 ? ModBase.LogLevel.Debug : ModBase.LogLevel.Hint);
+            }
+
+            if (!ok)
+                HintService.Hint(Lang.Text("Main.Overlay.HotKeyFailed"), HintType.Error);
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[Overlay] 注册热键失败", ModBase.LogLevel.Hint);
+        }
+    }
+
+    /// <summary>切换叠加面板的显示状态。</summary>
+    /// <summary>上次切换叠加面板的时间，用于防止重复触发。</summary>
+    private static DateTime _lastOverlayToggle = DateTime.MinValue;
+
+    /// <summary>
+    ///     忽略间隔过短的重复切换。<br/>
+    ///     分支说明：全局热键在以下几种情况下会连续产生多条 WM_HOTKEY ——
+    ///     按住组合键时的键盘自动重复、UI 线程被阻塞后积压的消息。
+    ///     不防抖的话面板会被连续开了又关，表现得像「自己消失了」。
+    /// </summary>
+    private const int OverlayToggleDebounceMs = 600;
+
+    private void ToggleOverlay()
+    {
+        var now = DateTime.Now;
+        if ((now - _lastOverlayToggle).TotalMilliseconds < OverlayToggleDebounceMs)
+        {
+            ModBase.Log($"[Overlay] 距上次切换仅 {(now - _lastOverlayToggle).TotalMilliseconds:F0}ms，忽略本次热键",
+                ModBase.LogLevel.Debug);
+            return;
+        }
+
+        _lastOverlayToggle = now;
+
+        if (ModGameOverlay.IsOpen)
+        {
+            ModGameOverlay.Close();
+            return;
+        }
+
+        // 分支说明：真全屏时覆盖层无法显示（游戏走独立翻转绕过了 DWM），
+        // 这时要给玩家明确的指引，而不是含糊地说「游戏没在运行」。
+        // 注意：若这个「无边框全屏」是启动器自己设置的，就不要拦 —— 那正是为了让面板可用的形态
+        if (ModGameFullscreen.IsExclusiveFullscreen() && !ModBorderlessFullscreen.IsActive)
+        {
+            ModBase.Log("[Overlay] 游戏处于真全屏，覆盖层无法合成，提示玩家切换窗口化");
+            HintService.Hint(Lang.Text("Main.Overlay.FullscreenBlocked"), HintType.Info);
+            return;
+        }
+
+        // 分支说明：要区分「没在跑」与「被最小化」——
+        // 后者游戏其实活得好好的，只是窗口收起来了，覆盖层贴不上去。
+        switch (ModGameOverlay.GetGameWindowState(force: true))
+        {
+            case ModGameOverlay.GameWindowState.NotRunning:
+                HintService.Hint(Lang.Text("Main.Overlay.NoGame"));
+                return;
+
+            case ModGameOverlay.GameWindowState.Minimized:
+            {
+                // 用户按热键显然是想用面板，那就先把游戏请回前台
+                ModBase.Log("[Overlay] 游戏窗口已最小化，先还原再打开面板");
+                if (!ModGameOverlay.RestoreGameWindow())
+                {
+                    HintService.Hint(Lang.Text("Main.Overlay.NoGame"));
+                    return;
+                }
+
+                // 等窗口真正还原（IsIconic 转 false、尺寸就位）再叠加，否则会贴错位置
+                ModBase.RunInNewThread(() =>
+                {
+                    Thread.Sleep(700);
+                    ModBase.RunInUi(() =>
+                    {
+                        if (ModGameOverlay.GetGameWindowState() != ModGameOverlay.GameWindowState.Ready)
+                            return;
+                        ModGameOverlay.Open(() => new GameOverlayPanel());
+                    });
+                }, "还原游戏后打开叠加面板");
+                return;
+            }
+        }
+
+        ModGameOverlay.Open(() => new GameOverlayPanel());
     }
 
     private void BtnTitleHelp_Click(object sender, EventArgs e)
@@ -1238,6 +1382,13 @@ public partial class FormMain
 
     private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
     {
+        // 全局热键：由 ModHotKey 注册，这里统一分发
+        if (ModHotKey.HandleMessage(msg, wParam, lParam))
+        {
+            handled = true;
+            return nint.Zero;
+        }
+
         if (msg == 30)
         {
             var nowDate = DateTime.Now;
@@ -1342,6 +1493,7 @@ public partial class FormMain
     // 最小化时暂停背景视频
     private void WindowStateChanged(object sender, EventArgs e)
     {
+        RefreshMaxButtonIcon();
         switch (WindowState)
         {
             case WindowState.Minimized:
@@ -1472,6 +1624,7 @@ public partial class FormMain
 
         // 分支说明：本分支已移除联机功能，ToolsGameLink 与 SetupGameLink 一并删除。
         ToolsTest = 3,
+    ToolsWiki = 5, // 分支说明：Wiki 查询页
 
         VersionOverall = 0,
         VersionSetup = 1,

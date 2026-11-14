@@ -16,13 +16,37 @@ internal static class ModAiLogAnalysis
     private const int MaxLogChars = 60000;
 
     private const string SystemPrompt =
-        "你是 Minecraft 崩溃日志分析专家。用户会给你一份崩溃日志（可能包含游戏日志、" +
-        "调试日志、crash-report 与 hs_err）。请：\n" +
-        "1. 先用一两句话说明最可能的崩溃原因；\n" +
-        "2. 指出日志里支持这个判断的关键行（原样引用）；\n" +
-        "3. 给出可操作的处理步骤，按优先级排列；\n" +
-        "4. 如果日志信息不足以判断，明确说不确定，并指出还需要哪些信息。\n" +
-        "不要编造日志里没有的内容。用简体中文回答，不要用 Markdown 标题符号。";
+        "你是 Minecraft 崩溃日志分析专家。输入是一份崩溃日志（可能包含游戏日志、调试日志、" +
+        "crash-report、hs_err）。请用简体中文回答。\n\n" +
+        "【输出格式】（严格遵守，分两部分）\n\n" +
+        "第一部分：文字分析。依次说明：\n" +
+        "  1) 一两句话点明最可能的崩溃原因；\n" +
+        "  2) 原样引用日志里支持该判断的关键行；\n" +
+        "  3) 按优先级列出处理步骤。\n" +
+        "不要编造日志里没有的内容。正文里不要使用 Markdown 标题符号（#）。\n\n" +
+        "第二部分：【必须输出】一个 JSON 代码块，用 ```json 和 ``` 包裹，列出可自动执行的修复操作。\n" +
+        "这是本任务的必需输出，不是可选项 —— 只要你的分析里提到了任何「删掉某文件」「改配置里某个值」" +
+        "「替换某文件内容」之类的动作，就必须把它转成对应 JSON 条目写进代码块。\n" +
+        "如果日志信息确实不足以定位原因，代码块写空数组 []，并在文字部分说明还需要哪些信息。\n\n" +
+        "可用操作（path 一律使用相对于实例目录的路径，例如 mods/xxx.jar、options.txt）：\n\n" +
+        "  delete_mod  删除模组/资源包文件（仅限 .jar / .zip / .jar.disabled）\n" +
+        "    {\"op\":\"delete_mod\",\"path\":\"mods/xxx.jar\",\"reason\":\"与 yyy 不兼容\"}\n\n" +
+        "  set_property  修改某个配置文件里指定键的值（该键不存在则追加到文件末尾）\n" +
+        "    {\"op\":\"set_property\",\"path\":\"options.txt\",\"key\":\"max-tick-time\",\"value\":\"-1\",\"reason\":\"...\"}\n\n" +
+        "  write_file  覆盖写入整个文本配置文件（value 必须给出完整内容，不是补丁片段）\n" +
+        "    {\"op\":\"write_file\",\"path\":\"config/xxx.json\",\"value\":\"完整文件内容\",\"reason\":\"...\"}\n\n" +
+        "规则：\n" +
+        "  - 一个代码块，内容是 JSON 数组，最多 5 条。\n" +
+        "  - 只能操作 .jar/.zip/.jar.disabled（删除）与文本配置类扩展名（.txt/.properties/.cfg/.toml/.json/.yaml/.yml/.ini/.conf）。\n" +
+        "  - 只能操作当前实例目录内的文件。\n" +
+        "  - 启动器会弹窗让用户确认后才执行，并在执行前自动备份原文件，所以你可以放心给出操作。\n\n" +
+        "## 示例输出 ##\n" +
+        "崩溃原因是 sodium 与 optifine 同时存在导致渲染管线冲突。日志中的关键行：\n" +
+        "  java.lang.NoSuchMethodError: net.minecraft.client.renderer.chunk.RenderChunk.setOrigin\n" +
+        "处理步骤：删除其中一个优化模组，二者功能重叠不能共存。\n\n" +
+        "```json\n" +
+        "[{\"op\":\"delete_mod\",\"path\":\"mods/sodium-0.5.11.jar\",\"reason\":\"与 OptiFine 渲染管线冲突\"}]\n" +
+        "```";
 
     private static string Env(string name, string fallback)
     {
@@ -53,7 +77,7 @@ internal static class ModAiLogAnalysis
     ///     把日志发给 AI，返回其回答文本。
     /// </summary>
     /// <exception cref="InvalidOperationException">未配置或返回值无法解析。</exception>
-    public static async Task<string> AnalyzeAsync(string logText, CancellationToken token = default)
+    public static async Task<string> AnalyzeAsync(string logText, McInstance? instance = null, CancellationToken token = default)
     {
         if (!IsAvailable) throw new InvalidOperationException("AI 分析未启用或未配置地址");
         if (string.IsNullOrWhiteSpace(Model)) throw new InvalidOperationException("AI 分析未配置模型");
@@ -62,13 +86,21 @@ internal static class ModAiLogAnalysis
         if (log.Length > MaxLogChars) log = "……（前文已省略）……\n" + log[^MaxLogChars..];
         if (string.IsNullOrWhiteSpace(log)) throw new InvalidOperationException("没有可分析的日志内容");
 
+        // 分支说明：把实例目录告诉模型，它才能给出可执行的相对路径。
+        var instanceInfo = instance is null
+            ? "（本次没有关联游戏实例，无法提出文件修改建议，只做文字分析。）"
+            : $"当前游戏实例：{instance.Name}" + "\n" +
+              $"实例目录：{instance.PathIndie}" + "\n" +
+              "建议里的 path 请使用相对于实例目录的路径。";
+        var systemContent = SystemPrompt + "\n\n【环境】\n" + instanceInfo;
+
         var payload = new JsonObject
         {
             ["model"] = Model,
             ["temperature"] = 0.3,
             ["messages"] = new JsonArray
             {
-                new JsonObject { ["role"] = "system", ["content"] = SystemPrompt },
+                new JsonObject { ["role"] = "system", ["content"] = systemContent },
                 new JsonObject { ["role"] = "user", ["content"] = log }
             }
         };

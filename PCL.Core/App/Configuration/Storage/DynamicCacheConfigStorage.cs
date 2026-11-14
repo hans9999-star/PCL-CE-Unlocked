@@ -21,15 +21,37 @@ public class DynamicCacheConfigStorage : ConfigStorage
         else _cache.TryGetValue(context, out storage);
         if (storage is null)
         {
-            try
+            // 分支说明：StorageFactory 在 context 为 null 时可能直接抛
+            // ArgumentNullException（例如 CustomInfo 这类需要上下文参数的配置项）。
+            // 此时不能把异常抛给 ConfigStorage.Access —— 那里的 catch 会调用
+            // Lifecycle.ForceShutdown(-2) 强制关闭启动器，导致只要有一个配置项
+            // 需要参数，任何「遍历所有配置项」的代码都会把启动器打死。
+            // 这里把「缺上下文」与「工厂真出错」区分开，返回 false 表示本次无值，
+            // 让调用方按默认值处理。
+            if (context is null)
             {
-                storage = StorageFactory(context);
-                if (context is null) _nullContextCache = storage;
-                else _cache[context] = storage;
+                try
+                {
+                    storage = StorageFactory(null);
+                }
+                catch (ArgumentNullException)
+                {
+                    // 该配置项必须有上下文参数，本次访问无值
+                    return false;
+                }
+                _nullContextCache = storage;
             }
-            catch (Exception ex)
+            else
             {
-                throw new Exception("Failed to invoke storage factory", ex);
+                try
+                {
+                    storage = StorageFactory(context);
+                    _cache[context] = storage;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Failed to invoke storage factory", ex);
+                }
             }
         }
         return storage.Access(action, ref key, ref value, context);

@@ -81,8 +81,68 @@ public static class ModServerHost
     /// <summary>服务端进程退出时触发。</summary>
     public static event Action? Exited;
 
+    /// <summary>
+    ///     最近的输出历史。<br/>
+    ///     分支说明：事件只能通知「此刻正在订阅的人」，而游戏内覆盖层是随时打开的 ——
+    ///     打开时服务端可能已经跑了一阵，只靠事件会看到一片空白。
+    ///     所以在这里留一份环形缓冲，任何消费者都能补看最近的输出。
+    /// </summary>
+    private static readonly Queue<string> History = new();
+
+    /// <summary>历史缓冲上限：约够看几百行，不至于无限增长。</summary>
+    private const int HistoryLimit = 400;
+
+    /// <summary>取最近的输出行（不含换行符）。</summary>
+    public static IReadOnlyList<string> GetRecentOutput()
+    {
+        lock (History)
+        {
+            return History.ToList();
+        }
+    }
+
+    /// <summary>清空输出历史（服务端启动时调用）。</summary>
+    public static void ClearHistory()
+    {
+        lock (History)
+        {
+            History.Clear();
+        }
+    }
+
+    /// <summary>
+    ///     输出一行文本：先记入历史，再通知订阅者。<br/>
+    ///     所有输出都必须走这里，否则覆盖层会漏掉内容。
+    /// </summary>
+    private static void Emit(string line)
+    {
+        lock (History)
+        {
+            History.Enqueue(line);
+            while (History.Count > HistoryLimit) History.Dequeue();
+        }
+
+        OutputReceived?.Invoke(line + Environment.NewLine);
+    }
+
     /// <summary>向控制台输出一行文本。</summary>
-    public static void Log(string line) => OutputReceived?.Invoke(line + Environment.NewLine);
+    public static void Log(string line) => Emit(line);
+
+    /// <summary>
+    ///     常用服务端指令。<br/>
+    ///     放在这里是为了让联机页与游戏内覆盖层共用同一份定义，避免两处各写一份而漂移。
+    /// </summary>
+    public static readonly (string Label, string Command, string Tip)[] QuickCommands =
+    [
+        ("保存世界", "save-all", "立即把所有世界数据写入磁盘"),
+        ("关闭自动保存", "save-off", "临时关闭自动保存，配合手动备份使用"),
+        ("开启自动保存", "save-on", "恢复自动保存"),
+        ("列出玩家", "list", "显示当前在线玩家"),
+        ("重载白名单", "whitelist reload", "从 whitelist.json 重新读取白名单"),
+        ("白天", "time set day", "把时间设为白天"),
+        ("晴天", "weather clear", "清除下雨/雷暴"),
+        ("保存并关服", "stop", "安全关闭服务器（会先保存世界）")
+    ];
 
     #region 路径
 
@@ -591,6 +651,9 @@ public static class ModServerHost
     /// </summary>
     public static bool Start(string serverDir, string jarPath, int memoryMb)
     {
+        // 新的一局，丢掉上一次的输出历史
+        ClearHistory();
+
         var args = new List<string>
         {
             $"-Xmx{memoryMb}M",
@@ -611,6 +674,9 @@ public static class ModServerHost
     /// </summary>
     public static bool StartWithArgsFile(string serverDir, string argsRelativePath, int memoryMb)
     {
+        // 新的一局，丢掉上一次的输出历史
+        ClearHistory();
+
         try
         {
             // 覆写 user_jvm_args.txt 写入内存设置
@@ -662,11 +728,11 @@ public static class ModServerHost
             using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
             proc.OutputDataReceived += (_, e) =>
             {
-                if (e.Data is not null) OutputReceived?.Invoke(e.Data + Environment.NewLine);
+                if (e.Data is not null) Emit(e.Data);
             };
             proc.ErrorDataReceived += (_, e) =>
             {
-                if (e.Data is not null) OutputReceived?.Invoke(e.Data + Environment.NewLine);
+                if (e.Data is not null) Emit(e.Data);
             };
             proc.Start();
             proc.BeginOutputReadLine();
@@ -675,7 +741,7 @@ public static class ModServerHost
             ModBase.Log($"[ServerHost] 安装器退出码：{proc.ExitCode}");
             if (proc.ExitCode != 0)
             {
-                OutputReceived?.Invoke($"[ServerHost] 安装器退出码 {proc.ExitCode}" + Environment.NewLine);
+                Emit($"[ServerHost] 安装器退出码 {proc.ExitCode}");
                 return false;
             }
 
@@ -754,11 +820,11 @@ public static class ModServerHost
             var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
             proc.OutputDataReceived += (_, e) =>
             {
-                if (e.Data is not null) OutputReceived?.Invoke(e.Data + Environment.NewLine);
+                if (e.Data is not null) Emit(e.Data);
             };
             proc.ErrorDataReceived += (_, e) =>
             {
-                if (e.Data is not null) OutputReceived?.Invoke(e.Data + Environment.NewLine);
+                if (e.Data is not null) Emit(e.Data);
             };
             proc.Exited += (_, _) =>
             {
@@ -793,7 +859,7 @@ public static class ModServerHost
             {
                 _process.StandardInput.WriteLine(command);
                 _process.StandardInput.Flush();
-                OutputReceived?.Invoke("> " + command + Environment.NewLine);
+                Emit("> " + command);
             }
             catch (Exception ex)
             {

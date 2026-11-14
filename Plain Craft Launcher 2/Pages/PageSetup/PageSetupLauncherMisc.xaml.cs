@@ -126,13 +126,26 @@ public partial class PageSetupLauncherMisc
             SetByTag(sender.Tag?.ToString(), sender.Value);
     }
 
-    /// <summary>AI 配置输入框改变时即时保存。</summary>
+    /// <summary>
+    ///     AI 配置输入框改变时的处理。<br/>
+    ///     分支说明：不要在这里即时保存。TextChanged 每敲一个字符就会触发，
+    ///     粘贴或输入法输入过程中会把「中间状态」写进配置 —— 实际出现过
+    ///     把 API Key 存成半截内容、之后请求一直 401 的情况。
+    ///     改为失焦（LostFocus）时保存，此时文本一定是最终值。
+    /// </summary>
     private void TextAi_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (sender is not MyTextBox box) return;
-        SetByTag(box.Tag?.ToString(), box.Text);
+        box.LostFocus -= TextAi_SaveOnLostFocus;
+        box.LostFocus += TextAi_SaveOnLostFocus;
     }
 
+    private void TextAi_SaveOnLostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MyTextBox box) return;
+        SetByTag(box.Tag?.ToString(), box.Text);
+        ModBase.Log($"[AI] 配置 {box.Tag} 已保存（失焦）");
+    }
     /// <summary>测试 AI 端点连通性。</summary>
     private async void BtnAiTest_Click(object sender, MouseButtonEventArgs e)
     {

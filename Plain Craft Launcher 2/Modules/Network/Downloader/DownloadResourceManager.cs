@@ -4,10 +4,30 @@ using System.Diagnostics;
 
 namespace PCL.Network;
 
+/// <summary>
+///     下载通道。按文件大小自动选择，业务代码不需要传类型。<br/>
+///     分支说明：不同大小的文件对并发连接的需求差别很大 —— 游戏本体是几个
+///     几十 MB 的大文件，开太多连接只是在抢带宽；而资源、库文件动辄上千个
+///     小文件，需要更多并发才能把管道填满。分成两条独立配额通道后，
+///     两者不会互相挤占。
+/// </summary>
+internal enum DownloadChannel
+{
+    /// <summary>大文件（游戏 jar、整合包等）。</summary>
+    Large,
+
+    /// <summary>小文件（资源、库、日志等）。</summary>
+    Small
+}
+
 /// <summary>协调所有下载任务共享的连接数、缓冲区和限速额度。</summary>
 internal static class DownloadResourceManager
 {
-    private static readonly AsyncQuota ConnectionQuota = new();
+    /// <summary>小于此大小的文件走 Small 通道。</summary>
+    private const long SmallFileThresholdBytes = 2L * 1024 * 1024;
+
+    private static readonly AsyncQuota LargeConnectionQuota = new();
+    private static readonly AsyncQuota SmallConnectionQuota = new();
     private static readonly AsyncQuota BufferQuota = new();
     private static readonly ConcurrentDictionary<string, HostQuotaEntry> HostConnectionQuotas = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Lock SpeedLock = new();
@@ -46,9 +66,28 @@ internal static class DownloadResourceManager
             Interlocked.Add(ref _speedBytes, bytes);
     }
 
-    public static async ValueTask<DownloadConnectionLease> AcquireConnectionAsync(string url,
-        CancellationToken cancellationToken)
+    /// <summary>按文件大小推断通道。大小未知时按小文件处理（更保守）。</summary>
+    internal static DownloadChannel ResolveChannel(long? fileSizeBytes)
     {
+        if (fileSizeBytes is null or <= 0) return DownloadChannel.Small;
+        return fileSizeBytes.Value < SmallFileThresholdBytes ? DownloadChannel.Small : DownloadChannel.Large;
+    }
+
+    private static AsyncQuota GetQuota(DownloadChannel channel) =>
+        channel == DownloadChannel.Large ? LargeConnectionQuota : SmallConnectionQuota;
+
+    /// <summary>
+    ///     申请一个下载连接。
+    /// </summary>
+    /// <param name="url">目标地址，用于按主机限流。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <param name="fileSizeBytes">文件总大小（未知时传 null），决定使用哪个通道的配额。</param>
+    public static async ValueTask<DownloadConnectionLease> AcquireConnectionAsync(string url,
+        CancellationToken cancellationToken, long? fileSizeBytes = null)
+    {
+        var channel = ResolveChannel(fileSizeBytes);
+        var quota = GetQuota(channel);
+
         var host = Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Host : url;
         var hostEntry = AcquireHostQuotaEntry(host);
         DownloadQuotaLease? hostLease = null;
@@ -57,11 +96,12 @@ internal static class DownloadResourceManager
             hostLease = await hostEntry.Quota.AcquireAsync(1, () => ModNet.NetTaskConnectionsPerHostLimit,
                 cancellationToken)
             .ConfigureAwait(false);
-            var globalLease = await ConnectionQuota.AcquireAsync(1,
-                () => Math.Clamp(ModNet.NetTaskConnectionLimit, 1, ModNet.NetTaskConnectionLimitMax), cancellationToken)
+            var channelLease = await quota.AcquireAsync(1,
+                () => Math.Clamp(ModNet.GetChannelConnectionLimit(channel == DownloadChannel.Large),
+                    1, ModNet.NetTaskConnectionLimitMax), cancellationToken)
                 .ConfigureAwait(false);
             Interlocked.Increment(ref _activeConnectionCount);
-            return new DownloadConnectionLease(globalLease, hostLease, hostEntry);
+            return new DownloadConnectionLease(channelLease, hostLease, hostEntry);
         }
         catch
         {
@@ -82,9 +122,11 @@ internal static class DownloadResourceManager
         Interlocked.Decrement(ref _activeConnectionCount);
     }
 
+    /// <summary>连接上限改变后通知两条通道重新计算可放行的等待者。</summary>
     public static void OnConnectionLimitChanged()
     {
-        ConnectionQuota.NotifyCapacityChanged();
+        LargeConnectionQuota.NotifyCapacityChanged();
+        SmallConnectionQuota.NotifyCapacityChanged();
     }
 
     #region Throttle

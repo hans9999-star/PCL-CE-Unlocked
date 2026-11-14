@@ -39,6 +39,7 @@ public static class ModMain
     public static PageLinkMain? frmLinkMain;
     public static PageToolsLeft? frmToolsLeft;
     public static PageToolsTest? frmToolsTest;
+    public static PageToolsWiki? frmToolsWiki;
     public static PageDownloadLeft? frmDownloadLeft;
     public static PageDownloadInstall? frmDownloadInstall;
     public static PageDownloadClient? frmDownloadClient;

@@ -19,6 +19,14 @@
                           Title="{DynamicResource Tools.Left.Utilities.Title}" Check="PageCheck"
                           LogoScale="0.9"
                           SvgIcon="lucide/tool-case" />
+        <local:MyListItem x:Name="ItemWiki"
+                          IsScaleAnimationEnabled="False"
+                          Type="RadioBox" Tag="5"
+                          MinPaddingRight="35" Height="36"
+                          VerticalAlignment="Top"
+                          Title="{DynamicResource Tools.Left.Wiki}" Check="PageCheck"
+                          LogoScale="0.9"
+                          SvgIcon="lucide/book-marked" />
 
     </StackPanel>
 </local:MyPageLeft>

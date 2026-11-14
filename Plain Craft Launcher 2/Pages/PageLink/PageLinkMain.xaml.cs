@@ -688,6 +688,19 @@ public partial class PageLinkMain
     #region PanFinish | 加载完成页面
 
     // 退出
+    /// <summary>
+    ///     从「分享成功」页返回开服控制台。<br/>
+    ///     分支说明：分享成功后 CurrentSubpage 会切到 PanFinish，
+    ///     而控制台在 PanServerHost —— 缺这个入口的话用户就再也看不到控制台了。
+    ///     这里只切视图，不退出大厅、也不停服务器。
+    /// </summary>
+    private void BtnFinishBack_Click(object sender, MouseButtonEventArgs e)
+    {
+        CurrentSubpage = Subpages.PanServerHost;
+        RefreshServerHostStatus();
+        ModBase.Log("[ServerHost] 从分享页返回控制台");
+    }
+
     private async void BtnFinishExit_Click(object sender, MouseButtonEventArgs e)
     {
         if (ModMain.MyMsgBox(
@@ -871,6 +884,8 @@ public partial class PageLinkMain
         BtnServerFiles.Visibility = software == ServerSoftware.Vanilla
             ? Visibility.Collapsed
             : Visibility.Visible;
+        // 确保快捷命令按钮已生成（只创建一次）
+        BuildQuickCommands();
     }
 
     /// <summary>
@@ -1123,6 +1138,7 @@ public partial class PageLinkMain
         ModServerHost.Log(Lang.Text("Instance.ServerHost.Log.Stopping"));
         await ModServerHost.StopAsync().ConfigureAwait(true);
         RefreshServerHostStatus();
+        HideServerShareInfo();
     }
 
     /// <summary>把本地服务端发布到联机大厅，朋友输邀请码即可进服。</summary>
@@ -1139,17 +1155,75 @@ public partial class PageLinkMain
         var username = LobbyInfoProvider.GetUsername();
         _finishIsHost = true;
         _serverPort = _serverHostPort;
-        CurrentSubpage = Subpages.PanFinish;
         ModBase.RunInUi(() => BtnFinishCopy.Visibility = Visibility.Collapsed);
 
         var res = await LobbyService.CreateLobbyAsync(_serverHostPort, username).ConfigureAwait(true);
-        if (!res)
+        if (!res) return;
+
+        // 分支说明：分享成功后【不切页】—— 开服控制台就在当前页，
+        // 切走会让用户失去控制台。改为在顶部就地显示邀请码信息栏。
+        // PanFinish 页保留给「加入房间」那条路径使用。
+        UpdateFinishPanel();
+        ShowServerShareInfo();
+    }
+
+    /// <summary>把邀请码显示在开服页顶部。</summary>
+    private void ShowServerShareInfo()
+    {
+        ModBase.RunInUi(() =>
         {
-            CurrentSubpage = Subpages.PanServerHost;
+            var code = LobbyService.CurrentLobbyCode ?? _lastCode ?? "";
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                PanServerShareInfo.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            LabServerShareCode.Text = code;
+            PanServerShareInfo.Visibility = Visibility.Visible;
+            ModBase.Log($"[ServerHost] 已分享至大厅，邀请码：{code}");
+        });
+    }
+
+    /// <summary>隐藏顶部的分享信息栏（停止服务器 / 退出大厅时调用）。</summary>
+    private void HideServerShareInfo()
+    {
+        ModBase.RunInUi(() => PanServerShareInfo.Visibility = Visibility.Collapsed);
+    }
+
+    /// <summary>复制开服页顶部显示的邀请码。</summary>
+    private void BtnServerShareCopy_Click(object sender, MouseButtonEventArgs e)
+    {
+        var code = LobbyService.CurrentLobbyCode ?? _lastCode ?? "";
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            HintService.Hint(Lang.Text("Tools.GameLink.Link.Finish.NoCode"));
             return;
         }
 
-        UpdateFinishPanel();
+        try
+        {
+            Clipboard.SetText(code);
+            HintService.Hint(Lang.Text("Tools.GameLink.Link.Finish.Copied"));
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[ServerHost] 复制邀请码失败", ModBase.LogLevel.Hint);
+        }
+    }
+
+    /// <summary>停止分享：退出大厅但不停服务器。</summary>
+    private async void BtnServerShareStop_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (ModMain.MyMsgBox(
+                Lang.Text("Tools.GameLink.Link.ServerHostShareStopConfirm"),
+                Lang.Text("Tools.GameLink.Link.ServerHostTitle"),
+                Lang.Text("Common.Action.Confirm"),
+                Lang.Text("Common.Action.Cancel")) != 1)
+            return;
+
+        await LobbyService.LeaveLobbyAsync().ConfigureAwait(true);
+        HideServerShareInfo();
     }
 
     private void BtnServerSend_Click(object sender, MouseButtonEventArgs e)
@@ -1176,6 +1250,48 @@ public partial class PageLinkMain
 
         ModServerHost.SendCommand(command);
         TextServerCommand.Text = string.Empty;
+    }
+
+    /// <summary>快捷命令定义：(按钮文字, 实际命令, 提示)。</summary>
+    /// <summary>生成快捷命令按钮。只在第一次进入时创建。</summary>
+    private void BuildQuickCommands()
+    {
+        if (PanQuickCommands.Children.Count > 0) return;
+
+        foreach (var (label, command, tip) in ModServerHost.QuickCommands)
+        {
+            var button = new MyButton
+            {
+                Text = label,
+                Margin = new Thickness(0, 0, 8, 8),
+                Padding = new Thickness(12, 5, 12, 5),
+                MinWidth = 74,
+                ToolTip = $"{tip}\n/{command}"
+            };
+
+            var capturedCommand = command;
+            var capturedLabel = label;
+            button.Click += (_, _) =>
+            {
+                if (!ModServerHost.IsRunning)
+                {
+                    HintService.Hint(Lang.Text("Instance.ServerHost.Error.NotRunning"));
+                    return;
+                }
+
+                // 「保存并关服」是个破坏性操作，先确认一下
+                if (capturedCommand == "stop" &&
+                    ModMain.MyMsgBox(Lang.Text("Tools.GameLink.Link.ServerHostQuickStopConfirm"),
+                        Lang.Text("Tools.GameLink.Link.ServerHostConsole"),
+                        Lang.Text("Common.Action.Confirm"), Lang.Text("Common.Action.Cancel")) != 1)
+                    return;
+
+                ModBase.Log($"[ServerHost] 快捷命令：{capturedLabel} -> /{capturedCommand}");
+                ModServerHost.SendCommand(capturedCommand);
+            };
+
+            PanQuickCommands.Children.Add(button);
+        }
     }
 
     #endregion
@@ -1211,6 +1327,46 @@ public partial class PageLinkMain
     ///     交给 PCL 原有的「实例资源页」（PageInstanceCompResource）与「资源下载页」（PageComp），
     ///     由它们完成本地列表 / 启用停用 / 删除 / 在线搜索 / 下载。
     /// </summary>
+    /// <summary>
+    ///     打开服务端整合包下载。
+    /// </summary>
+    /// <remarks>
+    ///     分支说明：PCL 原有的整合包下载页（PageComp + CompType.ModPack）本身就能用，
+    ///     这里不重造轮子，只负责把目标服务端记下来 —— 下载完成后由
+    ///     ModModpack 把内容装进对应目录。因为服务端没有 McInstance，
+    ///     需要先把 ActiveTarget 与备用实例准备好，避免后续页面解引用空值。
+    /// </remarks>
+    private void BtnServerModpack_Click(object sender, MouseButtonEventArgs e)
+    {
+        var version = SelectedVersion;
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            HintService.Hint(Lang.Text("Tools.GameLink.Link.ServerHostNoVersions"), HintType.Error);
+            return;
+        }
+
+        var software = SelectedSoftware;
+        var vanilla = SelectedGameVersion;
+
+        ModServerContent.ActiveTarget = ModServerContent.BuildTarget(software, version, vanilla,
+            $"{software} · {vanilla}");
+
+        var fallback = ResolveInstanceForContent(vanilla);
+        if (fallback is null)
+        {
+            ModServerContent.ActiveTarget = null;
+            HintService.Hint(Lang.Text("Tools.GameLink.Link.ServerHostNeedInstance"), HintType.Error);
+            return;
+        }
+
+        PageInstanceLeft.McInstance = fallback;
+        ModInstanceList.McMcInstanceSelected = fallback;
+        CurrentSubpage = Subpages.PanServerHost;
+
+        ModBase.Log($"[ServerHost] 打开服务端整合包下载：{software} · {vanilla}");
+        ModMain.frmMain.PageChange(FormMain.PageType.Download, FormMain.PageSubType.DownloadPack);
+    }
+
     private void BtnServerFiles_Click(object sender, MouseButtonEventArgs e)
     {
         var version = SelectedVersion;

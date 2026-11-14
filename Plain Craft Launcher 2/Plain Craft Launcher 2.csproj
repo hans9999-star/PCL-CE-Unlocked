@@ -12,6 +12,7 @@
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
         <RuntimeIdentifier Condition="'$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
         <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+        <RuntimeIdentifier Condition="'$(Platform)' == 'x86'">win-x86</RuntimeIdentifier>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
         <MapFileExtensions>true</MapFileExtensions>
         <TargetCulture>zh-CN</TargetCulture>
@@ -20,7 +21,7 @@
         <LangVersion>14</LangVersion>
         <UseWPF>true</UseWPF>
         <Configurations>Beta;Debug;Release;CI</Configurations>
-        <Platforms>AnyCPU;x64;ARM64</Platforms>
+        <Platforms>AnyCPU;x86;x64;ARM64</Platforms>
         <ImplicitUsings>enable</ImplicitUsings>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon>Images\icon.ico</ApplicationIcon>
@@ -28,10 +29,10 @@
         <Description>Minecraft 启动器 (作者: 龙腾猫跃; 经社区二次开发版本)</Description>
         <Product>Plain Craft Launcher Unbound Edition</Product>
         <Copyright>Copyright © 龙腾猫跃 2016. All Rights Reserved.</Copyright>
-        <Version>1.0.4</Version>
-    <InformationalVersion>1.0.4</InformationalVersion>
-    <AssemblyVersion>1.0.4.0</AssemblyVersion>
-        <FileVersion>1.0.4.0</FileVersion>
+        <Version>1.1.0</Version>
+    <InformationalVersion>1.1.0</InformationalVersion>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+        <FileVersion>1.1.0.0</FileVersion>
         <NoWarn>
             41999;42016;42017;42018;42019;42020;42021;42022;42032;42036;42314;
             VSTHRD002;VSTHRD003;VSTHRD110;VSTHRD200
@@ -73,6 +74,7 @@
         <PackageReference Include="Downloader" Version="5.9.4" />
         <PackageReference Include="Markdig.Wpf" Version="0.5.0.1" />
         <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" />
+        <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
         <PackageReference Include="NAudio" Version="2.3.0" />
         <PackageReference Include="protobuf-net" Version="3.2.56" />
         <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />

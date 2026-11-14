@@ -37,6 +37,10 @@ public class UpdatesGitHubModel : IUpdateSource
     ///     这里允许用户配置一个加速前缀（例如 https://gh-proxy.com/），
     ///     为空则直连。前缀直接拼在完整原始 URL 之前。
     /// </summary>
+    /// <summary>
+    ///     给下载地址套上加速前缀。<b>仅用于 releases/download 这类静态资源</b>，
+    ///     不要用于 api.github.com —— 加速源对 API 的响应不是合法的 JSON。
+    /// </summary>
     private static string ViaProxy(string url)
     {
         var proxy = (Config.Update.GitHubProxy ?? "").Trim();
@@ -54,7 +58,10 @@ public class UpdatesGitHubModel : IUpdateSource
         // 拖慢窗口加载动画。这里改用短超时、不重试，让 UpdatesWrapperModel
         // 能快速回退到下一个可用源（PCL CE 官方源）。
         var param = new RequestParam { Timeout = 8000, Retries = 0 };
-        var json = Requester.FetchString(ViaProxy(_apiUrl), param);
+        // 分支说明：API 请求【绝对不能】走加速源。
+        // 多数 GitHub 加速（如 gh-proxy）只代理 releases/download 这类静态文件，
+        // 对 api.github.com 会返回非 JSON 内容（实测返回了 "ok"），导致更新检测直接失败。
+        var json = Requester.FetchString(_apiUrl, param);
         var release = ModBase.GetJson(json).ToObject<GitHubRelease>();
         if (release is null) throw new NullReferenceException("无法解析 GitHub Release 信息！");
         _cache = release;

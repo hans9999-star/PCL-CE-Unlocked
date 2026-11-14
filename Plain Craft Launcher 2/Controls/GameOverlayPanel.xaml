@@ -1,0 +1,346 @@
+<UserControl x:Class="PCL.GameOverlayPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:PCL">
+    <UserControl.Resources>
+        <!-- 底部图标条的按钮样式 -->
+        <Style x:Key="OverlayIconChip" TargetType="Border">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Background" Value="#28FFFFFF" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+    </UserControl.Resources>
+    <Grid Background="Transparent">
+
+        <!-- ═══ 全屏层：游戏画面变暗 ═══ -->
+        <Border x:Name="PanDim" Background="#000000" Opacity="0" />
+
+        <!-- ═══ Steam 风格覆盖层 ═══ -->
+        <Grid x:Name="PanMain" Opacity="0">
+
+            <!-- 背景第一层：方块贴图平铺（兜底，立即可见） -->
+            <Image x:Name="ImgBack" Stretch="UniformToFill" Opacity="1"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+            <!-- 背景第二层：当前游玩版本的官方全景图，加载完成后淡入盖住兜底层 -->
+            <!-- 分支说明：全景图要从游戏的 assets 里按版本实时解析，解码是异步的，
+                 所以先用方块贴图占位，解析好了再淡入，避免打开时背景空一下。 -->
+            <Image x:Name="ImgPano" Stretch="UniformToFill" Opacity="0"
+                   RenderOptions.BitmapScalingMode="HighQuality" />
+
+            <!-- 顶部与底部渐变，让文字有足够对比度 -->
+            <Border>
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#B0000000" Offset="0" />
+                        <GradientStop Color="#00000000" Offset="0.28" />
+                        <GradientStop Color="#00000000" Offset="0.72" />
+                        <GradientStop Color="#B0000000" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+
+            <Grid Margin="26,20,26,18">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- ── 左上：时间 / 日期 / 会话时长 ── -->
+                <StackPanel Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="LabClock" FontSize="26" FontWeight="Bold"
+                                   Foreground="White" FontFamily="Consolas, Microsoft YaHei UI" />
+                        <!-- 电池图标用文字近似，避免额外图形资源 -->
+                        <TextBlock x:Name="LabBattery" FontSize="49" FontWeight="Bold"
+                                   Margin="8,-14,0,0" Foreground="#7CE38B"
+                                   FontFamily="Consolas" VerticalAlignment="Center"
+                                   Text="▮" />
+                    </StackPanel>
+
+                    <TextBlock x:Name="LabDate" FontSize="12" Foreground="#B0FFFFFF"
+                               Margin="0,2,0,0" />
+
+                    <TextBlock x:Name="LabSession" FontSize="12" Foreground="#B0FFFFFF"
+                               Margin="0,2,0,0" />
+
+                    <Border Margin="0,12,0,0" Padding="10,6" CornerRadius="4"
+                            Background="#30FFFFFF" HorizontalAlignment="Left" Cursor="Hand"
+                            MouseLeftButtonUp="BtnQuitGame_Click">
+                        <TextBlock Text="{DynamicResource Main.Overlay.QuitGame}"
+                                   FontSize="12" Foreground="White" />
+                    </Border>
+                </StackPanel>
+
+                <!-- ── 右上：返回游戏 / 关闭 ── -->
+                <StackPanel Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Orientation="Horizontal">
+                    <StackPanel Margin="0,0,14,0" Cursor="Hand"
+                                MouseLeftButtonUp="BtnBackToGame_Click">
+                        <TextBlock Text="{DynamicResource Main.Overlay.BackToGame}"
+                                   FontSize="15" FontWeight="Bold" Foreground="White"
+                                   HorizontalAlignment="Right" />
+                        <TextBlock Text="(Shift+Tab)" FontSize="11" Foreground="#90FFFFFF"
+                                   HorizontalAlignment="Right" Margin="0,1,0,0" />
+                    </StackPanel>
+
+                    <Border Width="34" Height="34" CornerRadius="4" Background="#28FFFFFF"
+                            Cursor="Hand" MouseLeftButtonUp="BtnClose_Click">
+                        <Path Data="M2,0 L0,2 8,10 0,18 2,20 10,12 18,20 20,18 12,10 20,2 18,0 10,8 2,0Z"
+                              Fill="White" Stretch="Uniform" Width="11" Height="11"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </StackPanel>
+
+                <!-- ── 中部：主内容（查询 / 笔记）── -->
+                <Border Grid.Row="1" x:Name="PanContent" Margin="0,18,0,18"
+                        CornerRadius="10" Background="#E6161619"
+                        HorizontalAlignment="Center" Width="760">
+                    <Grid Margin="20,16,20,16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- 标题与页签 -->
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 标题用游戏本体里的 logo 贴图（从版本 jar 提取） -->
+                            <Image Grid.Column="0" x:Name="ImgLogo" Height="34"
+                                   Stretch="Uniform" VerticalAlignment="Center"
+                                   Margin="0,0,22,0"
+                                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <local:MyButton x:Name="BtnTabSearch" Padding="16,6"
+                                                ColorType="Highlight"
+                                                Text="{DynamicResource Main.Overlay.Tab.Search}"
+                                                Click="BtnTabSearch_Click" />
+                                <local:MyButton x:Name="BtnTabNote" Margin="8,0,0,0"
+                                                Padding="16,6"
+                                                Text="{DynamicResource Main.Overlay.Tab.Note}"
+                                                Click="BtnTabNote_Click" />
+                                <local:MyButton x:Name="BtnTabConsole" Margin="8,0,0,0"
+                                                Padding="16,6"
+                                                Text="{DynamicResource Main.Overlay.Tab.Console}"
+                                                Click="BtnTabConsole_Click" />
+                                <local:MyButton x:Name="BtnTabMacro" Margin="8,0,0,0"
+                                                Padding="16,6"
+                                                Text="{DynamicResource Main.Overlay.Tab.Macro}"
+                                                Click="BtnTabMacro_Click" />
+
+                            </StackPanel>
+
+                            <!-- 右下角统计信息 -->
+                            <TextBlock Grid.Column="2" x:Name="LabStats" FontSize="11"
+                                       Foreground="#90FFFFFF" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       FontFamily="Consolas, Microsoft YaHei UI" />
+                        </Grid>
+
+                        <!-- 页签内容宿主 -->
+                        <Grid x:Name="PanTabHost" Grid.Row="1">
+
+                        <!-- 查询页 -->
+                        <Grid x:Name="PanSearchTab">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0" Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <local:MyIconButton x:Name="BtnBack" Grid.Column="0" Height="28" Width="28"
+                                                    Theme="White" Margin="0,0,8,0"
+                                                    ToolTip="{DynamicResource Main.Overlay.Back}"
+                                                    Visibility="Collapsed"
+                                                    Click="BtnBack_Click"
+                                                    SvgIcon="lucide/arrow-left" />
+
+                                <TextBox Grid.Column="1" x:Name="TextSearch"
+                                         Background="#30FFFFFF" Foreground="White"
+                                         BorderThickness="0" Padding="10,7" FontSize="13"
+                                         CaretBrush="White"
+                                         KeyDown="TextSearch_KeyDown" />
+
+                                <local:MyButton Grid.Column="2" Margin="8,0,0,0"
+                                                Padding="14,6" ColorType="Highlight"
+                                                Text="{DynamicResource Main.Overlay.Search}"
+                                                Click="BtnSearch_Click" />
+                            </Grid>
+
+                            <Grid Grid.Row="1">
+                                <local:MyScrollViewer x:Name="PanScroll" VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Disabled"
+                                                      DeltaMult="0.7">
+                                    <StackPanel x:Name="PanResults" />
+                                </local:MyScrollViewer>
+
+                                <StackPanel x:Name="PanStatus" HorizontalAlignment="Center"
+                                            VerticalAlignment="Center" Margin="20,0,20,0">
+                                    <TextBlock x:Name="LabStatus"
+                                               Foreground="#A0FFFFFF" FontSize="12"
+                                               TextWrapping="Wrap" TextAlignment="Center"
+                                               Text="{DynamicResource Main.Overlay.Hint}" />
+                                    <local:MyLoading x:Name="Load" Margin="0,14,0,0"
+                                                     HorizontalAlignment="Center"
+                                                     Text="{DynamicResource Main.Overlay.Loading}"
+                                                     Visibility="Collapsed" />
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+
+                        <!-- 快捷操作页：向游戏发送模拟的鼠标/键盘输入 -->
+                        <Grid x:Name="PanMacroTab" Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Foreground="#A0FFFFFF" FontSize="12"
+                                       TextWrapping="Wrap" Margin="0,0,0,10"
+                                       Text="{DynamicResource Main.Overlay.Macro.Note}" />
+
+                            <!-- 聊天指令：自动按 T、输入内容、回车 -->
+                            <Grid Grid.Row="1" Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Grid.Column="0" x:Name="TextChatCommand"
+                                         Background="#30FFFFFF" Foreground="White"
+                                         BorderThickness="0" Padding="10,7" FontSize="13"
+                                         CaretBrush="White"
+                                         KeyDown="TextChatCommand_KeyDown" />
+
+                                <local:MyButton Grid.Column="1" Margin="8,0,0,0"
+                                                Padding="14,6" ColorType="Highlight"
+                                                Text="{DynamicResource Main.Overlay.Macro.SendChat}"
+                                                Click="BtnSendChat_Click" />
+                            </Grid>
+
+                            <!-- 宏按钮列表 -->
+                            <local:MyScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  DeltaMult="0.7">
+                                <WrapPanel x:Name="PanMacroButtons" />
+                            </local:MyScrollViewer>
+                        </Grid>
+                        <!-- 控制台页：给正在运行的便携服务端发指令 -->
+                        <Grid x:Name="PanConsoleTab" Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Background="#40000000" CornerRadius="6">
+                                <Grid>
+                                    <local:MyScrollViewer x:Name="PanConsoleScroll"
+                                                          VerticalScrollBarVisibility="Auto"
+                                                          HorizontalScrollBarVisibility="Disabled"
+                                                          DeltaMult="0.7">
+                                        <TextBox x:Name="TextConsole" IsReadOnly="True" AcceptsReturn="True"
+                                                 TextWrapping="Wrap" VerticalScrollBarVisibility="Disabled"
+                                                 Background="Transparent" BorderThickness="0" Padding="8"
+                                                 FontFamily="Consolas, Microsoft YaHei UI" FontSize="12"
+                                                 Foreground="#DCFFFFFF" />
+                                    </local:MyScrollViewer>
+
+                                    <TextBlock x:Name="LabConsoleIdle"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Foreground="#90FFFFFF" FontSize="12"
+                                               Text="{DynamicResource Main.Overlay.ConsoleIdle}" />
+                                </Grid>
+                            </Border>
+
+                            <Grid Grid.Row="1" Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Grid.Column="0" x:Name="TextCommand"
+                                         Background="#30FFFFFF" Foreground="White"
+                                         BorderThickness="0" Padding="10,7" FontSize="13"
+                                         CaretBrush="White"
+                                         KeyDown="TextCommand_KeyDown" />
+
+                                <local:MyButton Grid.Column="1" Margin="8,0,0,0"
+                                                Padding="14,6" ColorType="Highlight"
+                                                Text="{DynamicResource Main.Overlay.Send}"
+                                                Click="BtnSendCommand_Click" />
+                            </Grid>
+
+                            <!-- 快捷命令：与联机页共用 ModServerHost.QuickCommands -->
+                            <WrapPanel x:Name="PanOverlayCommands" Grid.Row="2" Margin="0,8,0,0" />
+                        </Grid>
+                        <!-- 笔记页 -->
+                        <Grid x:Name="PanNoteTab" Visibility="Collapsed">
+                            <TextBox x:Name="TextNote"
+                                     Background="#20FFFFFF" Foreground="White"
+                                     BorderThickness="0" Padding="12"
+                                     FontSize="13" AcceptsReturn="True"
+                                     TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                     CaretBrush="White"
+                                     TextChanged="TextNote_TextChanged" />
+                        </Grid>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+
+                <!-- ── 底部：功能图标条 ── -->
+                <!-- 分支说明：用 MyIconButton 而不是 Border+TextBlock ——
+                     后者在 Border 里默认靠左上对齐，需要手动居中，且 emoji 字体
+                     在不同系统上渲染不一致。MyIconButton 自带居中与主题适配。 -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <local:MyIconButton x:Name="BtnIcoInfo" Height="36" Width="36"
+                                        Theme="White" Margin="5,0"
+                                        ToolTip="{DynamicResource Main.Overlay.Tab.Search}"
+                                        Click="BtnIcoSearch_Click"
+                                        SvgIcon="lucide/search" />
+
+                    <local:MyIconButton x:Name="BtnIcoNote" Height="36" Width="36"
+                                        Theme="White" Margin="5,0"
+                                        ToolTip="{DynamicResource Main.Overlay.Tab.Note}"
+                                        Click="BtnIcoNote_Click"
+                                        SvgIcon="lucide/pencil" />
+
+                    <local:MyIconButton x:Name="BtnIcoConsole" Height="36" Width="36" Theme="White" Margin="5,0"
+                                        ToolTip="{DynamicResource Main.Overlay.Tab.Console}"
+                                        Click="BtnIcoConsole_Click"
+                                        SvgIcon="lucide/server" />
+
+                    <local:MyIconButton x:Name="BtnIcoMacro" Height="36" Width="36" Theme="White" Margin="5,0"
+                                        ToolTip="{DynamicResource Main.Overlay.Tab.Macro}"
+                                        Click="BtnIcoMacro_Click"
+                                        SvgIcon="lucide/sparkles" />
+
+                    <local:MyIconButton Height="36" Width="36" Theme="White" Margin="5,0"
+                                        ToolTip="{DynamicResource Main.Overlay.CopyCode}"
+                                        Click="BtnCopyCode_Click"
+                                        SvgIcon="lucide/copy" />
+
+
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
